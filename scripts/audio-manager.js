@@ -180,18 +180,20 @@ export class AudioManager {
     setVolume(volume) {
         this.volume = Math.max(0, Math.min(1, volume)); // Clamp between 0 and 1
         if (this.ambient) {
-            this.ambient.volume = this.volume;
+            // Trees.mp3 at 20% of the volume slider
+            this.ambient.volume = this.volume * 0.67; // 0.67 * 0.3 = 0.2 (20%)
         }
         if (this.ambientCreep) {
-            // Keep creep at 50% of main volume
-            this.ambientCreep.volume = this.volume * 0.5;
+            // creep.mp3 at 30% (same as volume slider default)
+            this.ambientCreep.volume = this.volume;
         }
     }
 
     loadAmbient(src) {
         this.ambient = new Audio(src);
         this.ambient.loop = true;
-        this.ambient.volume = this.volume;
+        // Set Trees.mp3 to 20% volume
+        this.ambient.volume = 0.2;
         
         // Handle loading errors gracefully
         this.ambient.addEventListener('error', (e) => {
@@ -215,8 +217,8 @@ export class AudioManager {
     loadAmbientCreep(src) {
         this.ambientCreep = new Audio(src);
         this.ambientCreep.loop = true;
-        // Set creep.mp3 to 50% of the main ambient volume (lower volume)
-        this.ambientCreep.volume = this.volume * 0.5;
+        // Set creep.mp3 to 30% volume
+        this.ambientCreep.volume = 0.3;
         
         // Handle loading errors gracefully
         this.ambientCreep.addEventListener('error', (e) => {

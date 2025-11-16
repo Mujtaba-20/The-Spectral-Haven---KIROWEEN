@@ -64,19 +64,6 @@ export class Settings {
                             <span class="setting-label" aria-live="polite">${this.settings.animationsEnabled ? 'On' : 'Off'}</span>
                         </div>
                         
-                        <!-- Skeleton Transition Toggle -->
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h3>Skeleton Transition</h3>
-                                <p>Show skeleton animation during page transitions</p>
-                            </div>
-                            <label class="toggle">
-                                <input type="checkbox" id="skeleton-toggle" ${this.settings.skeletonEnabled ? 'checked' : ''} aria-label="Toggle skeleton transition animation">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span class="setting-label" aria-live="polite">${this.settings.skeletonEnabled ? 'On' : 'Off'}</span>
-                        </div>
-                        
                         <!-- Plain List Mode Toggle -->
                         <div class="setting-item">
                             <div class="setting-info">
@@ -145,17 +132,7 @@ export class Settings {
                 this.updateLabel('animations-toggle', this.settings.animationsEnabled ? 'On' : 'Off');
             });
         }
-        
-        // Skeleton toggle
-        const skeletonToggle = document.getElementById('skeleton-toggle');
-        if (skeletonToggle) {
-            skeletonToggle.addEventListener('change', (e) => {
-                this.settings.skeletonEnabled = e.target.checked;
-                this.saveSettings();
-                this.applySkeletonSetting();
-                this.updateLabel('skeleton-toggle', this.settings.skeletonEnabled ? 'On' : 'Off');
-            });
-        }
+
         
         // Plain list mode toggle
         const plainListToggle = document.getElementById('plain-list-toggle');

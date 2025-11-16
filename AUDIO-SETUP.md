@@ -4,8 +4,8 @@
 
 The Spectral Haven app includes an audio system with:
 - **Dual ambient tracks** that play continuously in the background:
-  - Trees.mp3 (main ambient at 30% volume)
-  - creep.mp3 (secondary ambient at 15% volume - half of main)
+  - Trees.mp3 (main ambient at 20% volume)
+  - creep.mp3 (secondary ambient at 30% volume - louder than main)
 - **Sound effects** that play on specific actions
 - **Mute toggle** to control all audio
 

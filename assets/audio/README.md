@@ -7,8 +7,8 @@ This directory contains audio files for The Spectral Haven application.
 Place the following audio files in this directory to enable sound:
 
 ### Ambient Tracks (Looping Background Audio)
-- `Trees.mp3` - Main ambient track (30% volume)
-- `creep.mp3` - Secondary ambient track for added atmosphere (15% volume - half of main)
+- `Trees.mp3` - Main ambient track (20% volume)
+- `creep.mp3` - Secondary ambient track for added atmosphere (30% volume - louder than main)
 - `ambient-loop.mp3` - Alternative looping ambient sound with wind, chimes, and crow sounds
 
 ### Sound Effects
@@ -22,8 +22,8 @@ Place the following audio files in this directory to enable sound:
 
 ## Audio Specifications
 
-- **Main Ambient (Trees.mp3)**: Seamless loop, 30% volume
-- **Secondary Ambient (creep.mp3)**: Seamless loop, 15% volume (50% of main)
+- **Main Ambient (Trees.mp3)**: Seamless loop, 20% volume
+- **Secondary Ambient (creep.mp3)**: Seamless loop, 30% volume (louder than main)
 - **SFX**: Short sound effects, 40-60% volume
 - **Format**: MP3 or WAV format supported
 
