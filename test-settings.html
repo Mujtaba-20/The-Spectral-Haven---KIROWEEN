@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Settings - Haunted Chamber</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/themes.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/animations.css">
+</head>
+<body class="theme-night">
+    <div id="app">
+        <div id="page-container"></div>
+    </div>
+
+    <script type="module">
+        import { Settings } from './scripts/components/settings.js';
+
+        console.log('Testing Settings Component');
+        
+        // Mock transition manager for skeleton setting
+        window.transitionManager = {
+            setSkeletonEnabled: (enabled) => {
+                console.log('Skeleton enabled:', enabled);
+            }
+        };
+
+        // Mock audio manager for mute setting
+        window.audioManager = {
+            mute: () => {
+                console.log('Audio muted');
+            },
+            unmute: () => {
+                console.log('Audio unmuted');
+            }
+        };
+
+        const settings = new Settings();
+        settings.render();
+
+        // Add visual feedback for theme changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    console.log('Body classes changed:', document.body.className);
+                }
+            });
+        });
+
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+
+        // Add visual feedback for app classes
+        const appObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    console.log('App classes changed:', document.getElementById('app').className);
+                }
+            });
+        });
+
+        const appEl = document.getElementById('app');
+        if (appEl) {
+            appObserver.observe(appEl, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        }
+
+        // Test localStorage persistence
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'hauntedChamberSettings') {
+                console.log('Settings updated in localStorage:', JSON.parse(e.newValue));
+            }
+        });
+
+        console.log('Current settings:', settings.settings);
+    </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Tracker Test - Haunted Chamber</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/themes.css">
+    <link rel="stylesheet" href="styles/background.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    
+    <style>
+        body {
+            padding: 20px;
+            background: var(--bg-primary);
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body class="theme-night">
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🎃 Mood Tracker Test</h1>
+            <p>Testing the Mood Tracker component implementation</p>
+        </div>
+        
+        <div id="page-container" class="page-container">
+            <!-- Mood tracker will be rendered here -->
+        </div>
+    </div>
+    
+    <script type="module">
+        import { MoodTracker } from './scripts/components/mood-tracker.js';
+        
+        // Initialize and render mood tracker
+        const moodTracker = new MoodTracker();
+        moodTracker.render();
+        
+        console.log('✅ Mood Tracker test page loaded');
+    </script>
+</body>
+</html>

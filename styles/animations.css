@@ -1,0 +1,1203 @@
+/* Animation Styles - Keyframes and animated effects */
+
+/* Pumpkin Flicker Animation */
+@keyframes pumpkinFlicker {
+    0%, 100% {
+        filter: brightness(1) drop-shadow(0 0 10px rgba(255, 140, 66, 0.6));
+    }
+    25% {
+        filter: brightness(1.2) drop-shadow(0 0 15px rgba(255, 140, 66, 0.8));
+    }
+    50% {
+        filter: brightness(0.9) drop-shadow(0 0 8px rgba(255, 140, 66, 0.5));
+    }
+    75% {
+        filter: brightness(1.1) drop-shadow(0 0 12px rgba(255, 140, 66, 0.7));
+    }
+}
+
+.pumpkin {
+    animation: pumpkinFlicker 3s ease-in-out infinite;
+}
+
+/* Tree Sway Animation */
+@keyframes treeSway {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(1deg);
+    }
+    75% {
+        transform: rotate(-1deg);
+    }
+}
+
+.tree {
+    transform-origin: bottom center;
+    animation: treeSway 4s ease-in-out infinite;
+}
+
+/* Cloud Parallax Animation */
+@keyframes cloudDrift {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(100px);
+    }
+}
+
+.cloud-1 {
+    animation: cloudDrift 60s linear infinite;
+}
+
+.cloud-2 {
+    animation: cloudDrift 80s linear infinite;
+}
+
+.cloud-3 {
+    animation: cloudDrift 70s linear infinite;
+}
+
+/* Bat Flight Animation */
+@keyframes batFlight {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    25% {
+        transform: translate(50px, -20px) rotate(5deg);
+    }
+    50% {
+        transform: translate(100px, 0) rotate(0deg);
+    }
+    75% {
+        transform: translate(50px, 20px) rotate(-5deg);
+    }
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+}
+
+.bat {
+    animation: batFlight 15s ease-in-out infinite;
+}
+
+.bat-2 {
+    animation-delay: -7.5s;
+}
+
+/* Skeleton Hanging Animation */
+@keyframes skeletonSway {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    50% {
+        transform: rotate(3deg);
+    }
+}
+
+.skeleton-hanging {
+    transform-origin: top center;
+    animation: skeletonSway 3s ease-in-out infinite;
+}
+
+/* Fog Drift Animation */
+@keyframes fogDrift {
+    0% {
+        transform: translateX(0) translateY(0);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translateX(-20px) translateY(-10px);
+        opacity: 0.4;
+    }
+    100% {
+        transform: translateX(0) translateY(0);
+        opacity: 0.3;
+    }
+}
+
+.fog-overlay {
+    animation: fogDrift 20s ease-in-out infinite;
+}
+
+/* Portal Ripple Animation */
+@keyframes portalRipple {
+    0% {
+        width: 0;
+        height: 0;
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        width: 200vmax;
+        height: 200vmax;
+        opacity: 0;
+    }
+}
+
+.portal-ripple.active {
+    animation: portalRipple 0.75s ease-out forwards;
+}
+
+/* Camera Zoom Effect for Background during Portal Transition */
+@keyframes cameraZoom {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.background-world.portal-active {
+    animation: cameraZoom 0.75s ease-in-out;
+}
+
+/* Skeleton Transition Animations */
+@keyframes skeletonSlideIn {
+    0% {
+        right: -200px;
+        opacity: 0;
+    }
+    100% {
+        right: 20%;
+        opacity: 1;
+    }
+}
+
+@keyframes skeletonSlideOut {
+    0% {
+        right: 20%;
+        opacity: 1;
+    }
+    100% {
+        right: -200px;
+        opacity: 0;
+    }
+}
+
+@keyframes skeletonTilt {
+    0%, 100% {
+        transform: translateY(-50%) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-50%) rotate(5deg);
+    }
+}
+
+.skeleton-container.slide-in {
+    animation: skeletonSlideIn 0.4s ease-out forwards;
+}
+
+.skeleton-container.slide-out {
+    animation: skeletonSlideOut 0.4s ease-in forwards;
+}
+
+.skeleton-container.tilting {
+    animation: skeletonTilt 0.6s ease-in-out infinite;
+}
+
+/* Ghost Float Animation */
+@keyframes ghostFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.ghost-float {
+    animation: ghostFloat 3s ease-in-out infinite;
+}
+
+/* Ghost Jitter Animation (Overdue) */
+@keyframes ghostJitter {
+    0%, 100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    25% {
+        transform: translate(-2px, 2px) rotate(-1deg);
+    }
+    50% {
+        transform: translate(2px, -2px) rotate(1deg);
+    }
+    75% {
+        transform: translate(-2px, -2px) rotate(-1deg);
+    }
+}
+
+.ghost-jitter {
+    animation: ghostJitter 0.3s ease-in-out infinite;
+}
+
+/* Ghost Completion Animation */
+@keyframes ghostBow {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(15deg);
+    }
+}
+
+@keyframes ghostFloatUp {
+    0% {
+        transform: translateY(0) rotate(15deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) rotate(15deg);
+        opacity: 0;
+    }
+}
+
+.ghost-bow {
+    animation: ghostBow 0.3s ease-out forwards;
+}
+
+.ghost-float-up {
+    animation: ghostFloatUp 1s ease-out forwards;
+}
+
+/* Fade Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.fade-out {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+/* Particle Glow Animation */
+@keyframes particleGlow {
+    0%, 100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+.particle-glow {
+    animation: particleGlow 2s ease-in-out infinite;
+}
+
+/* Candle Flame Flicker */
+@keyframes flameFlicker {
+    0%, 100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+    25% {
+        transform: scale(1.05, 0.95) translateY(-2px);
+        opacity: 0.95;
+    }
+    50% {
+        transform: scale(0.98, 1.02) translateY(1px);
+        opacity: 0.9;
+    }
+    75% {
+        transform: scale(1.02, 0.98) translateY(-1px);
+        opacity: 0.95;
+    }
+}
+
+.flame-flicker {
+    animation: flameFlicker 1.5s ease-in-out infinite;
+}
+
+/* Smoke Rise Animation */
+@keyframes smokeRise {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-100px) scale(1.5);
+        opacity: 0;
+    }
+}
+
+.smoke-rise {
+    animation: smokeRise 2s ease-out forwards;
+}
+
+/* Disable animations when preference is set */
+@media (prefers-reduced-motion: reduce) {
+    .pumpkin,
+    .tree,
+    .cloud-1,
+    .cloud-2,
+    .cloud-3,
+    .bat,
+    .skeleton-hanging,
+    .fog-overlay,
+    .ghost-float,
+    .ghost-jitter,
+    .flame-flicker {
+        animation: none !important;
+    }
+}
+
+/* Animation disabled class */
+.animations-disabled * {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Whisper Well Spirit Animations */
+
+/* Spirit Idle Float */
+@keyframes spiritIdle {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-8px) scale(1.02);
+    }
+}
+
+.well-spirit.spirit-idle {
+    animation: spiritIdle 4s ease-in-out infinite;
+}
+
+/* Spirit Aura Pulse */
+@keyframes spiritAuraPulse {
+    0%, 100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.9;
+        transform: scale(1.1);
+    }
+}
+
+.spirit-aura {
+    animation: spiritAuraPulse 3s ease-in-out infinite;
+}
+
+/* Spirit Wisp Movement */
+@keyframes spiritWisp1 {
+    0%, 100% {
+        opacity: 0.3;
+        transform: translateY(0) translateX(0);
+    }
+    50% {
+        opacity: 0.6;
+        transform: translateY(-5px) translateX(-3px);
+    }
+}
+
+@keyframes spiritWisp2 {
+    0%, 100% {
+        opacity: 0.4;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 0.7;
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes spiritWisp3 {
+    0%, 100% {
+        opacity: 0.3;
+        transform: translateY(0) translateX(0);
+    }
+    50% {
+        opacity: 0.6;
+        transform: translateY(-5px) translateX(3px);
+    }
+}
+
+.spirit-wisp-1 {
+    animation: spiritWisp1 2.5s ease-in-out infinite;
+}
+
+.spirit-wisp-2 {
+    animation: spiritWisp2 3s ease-in-out infinite;
+}
+
+.spirit-wisp-3 {
+    animation: spiritWisp3 2.8s ease-in-out infinite;
+}
+
+/* Spirit Listening (reacts to typing) */
+.well-spirit.spirit-listening {
+    animation: spiritLean 0.3s ease-out forwards;
+}
+
+@keyframes spiritLean {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        transform: translateY(-5px) scale(1.05);
+    }
+}
+
+/* Spirit Attentive (focused) */
+.well-spirit.spirit-attentive .spirit-aura {
+    animation: spiritAuraPulse 1.5s ease-in-out infinite;
+}
+
+/* Spirit Consuming (eating whisper) */
+@keyframes spiritConsume {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.well-spirit.spirit-consuming {
+    animation: spiritConsume 1.5s ease-in-out;
+}
+
+/* Spirit Satisfied (after consuming) */
+@keyframes spiritSatisfied {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.05);
+        filter: brightness(1.3);
+    }
+}
+
+.well-spirit.spirit-satisfied {
+    animation: spiritSatisfied 1s ease-in-out;
+}
+
+/* Well Spirit Container */
+.well-spirit-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.well-spirit {
+    width: 120px;
+    height: 140px;
+    filter: drop-shadow(0 0 15px rgba(93, 217, 193, 0.4));
+}
+
+/* Dissolve Character Animation */
+.dissolve-char {
+    position: absolute;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    pointer-events: none;
+    will-change: transform, opacity;
+    font-weight: bold;
+}
+
+/* Well Layout Styles */
+.whisper-well-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.whisper-well-page h1 {
+    text-align: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.whisper-well-page .subtitle {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.whisper-well-page .privacy-notice {
+    max-width: 800px;
+    margin: 0 auto var(--spacing-xl) auto;
+}
+
+.well-layout {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-xl);
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 900px) {
+    .well-layout {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+}
+
+/* Well Structure */
+.well-structure {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.stone-well {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.7));
+}
+
+@media (max-width: 900px) {
+    .stone-well {
+        max-width: 350px;
+    }
+}
+
+.well-animation-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.falling-char {
+    position: absolute;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    pointer-events: none;
+    will-change: transform, opacity;
+    text-shadow: 0 0 8px rgba(93, 217, 193, 0.6);
+    opacity: 1;
+}
+
+/* Spirit Ball (temporary, for animation) */
+.spirit-ball {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, 
+        rgba(255, 255, 255, 0.9) 0%,
+        var(--ball-color, rgba(93, 217, 193, 0.9)) 30%,
+        var(--ball-color, rgba(93, 217, 193, 0.7)) 60%,
+        var(--ball-color, rgba(93, 217, 193, 0.4)) 100%
+    );
+    box-shadow: 
+        0 0 20px var(--ball-color, rgba(93, 217, 193, 0.8)),
+        0 0 40px var(--ball-color, rgba(93, 217, 193, 0.6)),
+        0 0 60px var(--ball-color, rgba(93, 217, 193, 0.4)),
+        inset 0 0 20px rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: spiritBallPulse 1.2s ease-in-out infinite;
+    z-index: 100;
+}
+
+@keyframes spiritBallPulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 
+            0 0 20px var(--ball-color, rgba(93, 217, 193, 0.8)),
+            0 0 40px var(--ball-color, rgba(93, 217, 193, 0.6)),
+            0 0 60px var(--ball-color, rgba(93, 217, 193, 0.4)),
+            inset 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 
+            0 0 30px var(--ball-color, rgba(93, 217, 193, 1)),
+            0 0 50px var(--ball-color, rgba(93, 217, 193, 0.8)),
+            0 0 80px var(--ball-color, rgba(93, 217, 193, 0.6)),
+            inset 0 0 30px rgba(255, 255, 255, 0.7);
+    }
+}
+
+/* Permanent balls in the well */
+.well-ball-permanent {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, 
+        rgba(255, 255, 255, 0.8) 0%,
+        var(--ball-color, rgba(93, 217, 193, 0.8)) 40%,
+        var(--ball-color, rgba(93, 217, 193, 0.6)) 100%
+    );
+    box-shadow: 
+        0 0 20px var(--ball-color, rgba(93, 217, 193, 0.8)),
+        0 0 35px var(--ball-color, rgba(93, 217, 193, 0.6)),
+        inset 0 0 20px rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.8s ease-in;
+    animation: wellBallFloat 5s ease-in-out infinite;
+    z-index: 80;
+}
+
+@keyframes wellBallFloat {
+    0%, 100% {
+        transform: translate(-50%, -50%) translateY(0) scale(1);
+    }
+    50% {
+        transform: translate(-50%, -50%) translateY(-10px) scale(1.05);
+    }
+}
+
+/* Spirit Speech Bubble */
+.spirit-speech-bubble {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.spirit-speech-bubble.visible {
+    opacity: 1;
+}
+
+.speech-bubble-content {
+    position: relative;
+    background: rgba(93, 217, 193, 0.95);
+    color: #0a0a0a;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    box-shadow: 
+        0 4px 20px rgba(93, 217, 193, 0.6),
+        0 0 40px rgba(93, 217, 193, 0.4),
+        inset 0 2px 10px rgba(255, 255, 255, 0.5);
+    min-width: 200px;
+    animation: speechBubbleBounce 0.5s ease-out;
+}
+
+.speech-bubble-content::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 15px solid rgba(93, 217, 193, 0.95);
+    filter: drop-shadow(0 4px 8px rgba(93, 217, 193, 0.4));
+}
+
+@keyframes speechBubbleBounce {
+    0% {
+        transform: scale(0.3) translateY(20px);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05) translateY(-5px);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Well Mist Animation */
+@keyframes wellMist1 {
+    0%, 100% {
+        opacity: 0.15;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.25;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes wellMist2 {
+    0%, 100% {
+        opacity: 0.15;
+        transform: scale(1) translateY(0);
+    }
+    50% {
+        opacity: 0.25;
+        transform: scale(1.15) translateY(-2px);
+    }
+}
+
+@keyframes wellMist3 {
+    0%, 100% {
+        opacity: 0.1;
+        transform: scale(1) translateY(0);
+    }
+    50% {
+        opacity: 0.18;
+        transform: scale(1.2) translateY(-3px);
+    }
+}
+
+.well-mist-1 {
+    animation: wellMist1 4s ease-in-out infinite;
+}
+
+.well-mist-2 {
+    animation: wellMist2 5s ease-in-out infinite 0.5s;
+}
+
+.well-mist-3 {
+    animation: wellMist3 6s ease-in-out infinite 1s;
+}
+
+/* Input Section - Right Side */
+.whisper-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    width: 100%;
+}
+
+.whisper-input-area {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.whisper-input {
+    width: 100%;
+    padding: var(--spacing-md);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-family: var(--font-body);
+    resize: vertical;
+    min-height: 150px;
+    transition: border-color 0.3s ease;
+}
+
+.whisper-input:focus {
+    outline: none;
+    border-color: var(--accent-teal);
+    box-shadow: 0 0 0 3px rgba(93, 217, 193, 0.15);
+}
+
+.whisper-input::placeholder {
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+/* Spirit Reply Area */
+.spirit-reply-area {
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spirit-reply {
+    animation: fadeInReply 0.8s ease-out forwards;
+}
+
+.spirit-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg);
+    background: rgba(93, 217, 193, 0.1);
+    border: 2px solid var(--accent-teal);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 0 20px rgba(93, 217, 193, 0.3);
+}
+
+.spirit-icon {
+    font-size: 2.5rem;
+    animation: spiritIconFloat 2s ease-in-out infinite;
+}
+
+@keyframes spiritIconFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.spirit-message p {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--accent-teal);
+    font-style: italic;
+    text-align: center;
+    font-weight: 500;
+}
+
+@keyframes fadeInReply {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Spirit Receiving State */
+.well-spirit.spirit-receiving {
+    animation: spiritReceiving 2s ease-in-out;
+}
+
+@keyframes spiritReceiving {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-10px) scale(1.08);
+    }
+}
+
+/* Disable spirit animations when preference is set */
+@media (prefers-reduced-motion: reduce) {
+    .well-spirit.spirit-idle,
+    .spirit-aura,
+    .spirit-wisp-1,
+    .spirit-wisp-2,
+    .spirit-wisp-3,
+    .well-spirit.spirit-listening,
+    .well-spirit.spirit-consuming,
+    .well-spirit.spirit-satisfied,
+    .well-spirit.spirit-receiving,
+    .well-mist-1,
+    .well-mist-2,
+    .spirit-icon {
+        animation: none !important;
+    }
+}
+
+.animations-disabled .well-spirit.spirit-idle,
+.animations-disabled .spirit-aura,
+.animations-disabled .spirit-wisp-1,
+.animations-disabled .spirit-wisp-2,
+.animations-disabled .spirit-wisp-3,
+.animations-disabled .well-spirit.spirit-listening,
+.animations-disabled .well-spirit.spirit-consuming,
+.animations-disabled .well-spirit.spirit-satisfied,
+.animations-disabled .well-spirit.spirit-receiving,
+.animations-disabled .well-mist-1,
+.animations-disabled .well-mist-2,
+.animations-disabled .spirit-icon {
+    animation: none !important;
+}
+
+/* Animated Waving Grass */
+.grass-layer {
+    animation: grassWave 4s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+
+@keyframes grassWave {
+    0%, 100% {
+        transform: skewX(0deg) translateX(0);
+    }
+    25% {
+        transform: skewX(2deg) translateX(2px);
+    }
+    50% {
+        transform: skewX(0deg) translateX(0);
+    }
+    75% {
+        transform: skewX(-2deg) translateX(-2px);
+    }
+}
+
+/* Add subtle wave to individual grass layers with different timing */
+.grass-layer path:nth-child(2) {
+    animation: grassBlade1 3.5s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+
+.grass-layer path:nth-child(3) {
+    animation: grassBlade2 4.2s ease-in-out infinite 0.3s;
+    transform-origin: bottom center;
+}
+
+.grass-layer path:nth-child(4) {
+    animation: grassBlade3 3.8s ease-in-out infinite 0.6s;
+    transform-origin: bottom center;
+}
+
+@keyframes grassBlade1 {
+    0%, 100% {
+        transform: skewX(0deg);
+    }
+    50% {
+        transform: skewX(1.5deg);
+    }
+}
+
+@keyframes grassBlade2 {
+    0%, 100% {
+        transform: skewX(0deg);
+    }
+    50% {
+        transform: skewX(-1.8deg);
+    }
+}
+
+@keyframes grassBlade3 {
+    0%, 100% {
+        transform: skewX(0deg);
+    }
+    50% {
+        transform: skewX(2deg);
+    }
+}
+
+/* Pumpkin Glowing/Blinking Animation */
+.glowing-pumpkin {
+    animation: pumpkinGlow 3s ease-in-out infinite;
+}
+
+@keyframes pumpkinGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 5px rgba(255, 140, 0, 0.4));
+    }
+    50% {
+        filter: drop-shadow(0 0 20px rgba(255, 140, 0, 0.9)) 
+                drop-shadow(0 0 30px rgba(255, 100, 0, 0.6));
+    }
+}
+
+/* Inner flicker effect for pumpkin faces */
+.pumpkin-flicker {
+    animation: pumpkinFlicker 2.5s ease-in-out infinite;
+}
+
+@keyframes pumpkinFlicker {
+    0%, 100% {
+        opacity: 0.3;
+    }
+    25% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    75% {
+        opacity: 0.4;
+    }
+}
+
+/* Different timing for each pumpkin */
+.glowing-pumpkin.pumpkin-1 {
+    animation: pumpkinGlow 3s ease-in-out infinite;
+}
+
+.glowing-pumpkin.pumpkin-2 {
+    animation: pumpkinGlow 3.5s ease-in-out infinite 0.5s;
+}
+
+.glowing-pumpkin.pumpkin-3 {
+    animation: pumpkinGlow 2.8s ease-in-out infinite 1s;
+}
+
+/* Glow effect on pumpkin eyes and mouth */
+.glowing-pumpkin polygon,
+.glowing-pumpkin path[stroke="#ffaa00"] {
+    animation: faceGlow 2s ease-in-out infinite;
+}
+
+@keyframes faceGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 2px rgba(255, 170, 0, 0.6));
+    }
+    50% {
+        filter: drop-shadow(0 0 8px rgba(255, 170, 0, 1)) 
+                drop-shadow(0 0 12px rgba(255, 100, 0, 0.8));
+    }
+}
+
+/* Cloud Transition Effect */
+.cloud-transition-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.transition-cloud {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, 
+        rgba(157, 123, 216, 0.8) 0%,
+        rgba(157, 123, 216, 0.6) 30%,
+        rgba(93, 217, 193, 0.6) 60%,
+        rgba(93, 217, 193, 0.4) 100%);
+    filter: blur(60px);
+    opacity: 0;
+}
+
+/* Different cloud layers with staggered timing */
+.transition-cloud.cloud-1 {
+    animation: cloudFadeInOut 0.7s ease-in-out forwards;
+    animation-delay: 0s;
+    filter: blur(80px);
+}
+
+.transition-cloud.cloud-2 {
+    animation: cloudFadeInOut 0.7s ease-in-out forwards;
+    animation-delay: 0.05s;
+    filter: blur(70px);
+    transform: scale(1.1);
+}
+
+.transition-cloud.cloud-3 {
+    animation: cloudFadeInOut 0.7s ease-in-out forwards;
+    animation-delay: 0.1s;
+    filter: blur(60px);
+    transform: scale(0.9);
+}
+
+.transition-cloud.cloud-4 {
+    animation: cloudFadeInOut 0.7s ease-in-out forwards;
+    animation-delay: 0.15s;
+    filter: blur(50px);
+    transform: scale(1.05);
+}
+
+.transition-cloud.cloud-5 {
+    animation: cloudFadeInOut 0.7s ease-in-out forwards;
+    animation-delay: 0.2s;
+    filter: blur(40px);
+    transform: scale(0.95);
+}
+
+@keyframes cloudFadeInOut {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.2) translateY(-20px);
+    }
+}
+
+/* Stopwatch Animations */
+.mystical-stopwatch {
+    transition: all 0.3s ease;
+}
+
+.mystical-stopwatch.running {
+    animation: stopwatchPulse 2s ease-in-out infinite;
+}
+
+@keyframes stopwatchPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(93, 217, 193, 0.3);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 0 40px rgba(93, 217, 193, 0.6),
+                    0 0 60px rgba(93, 217, 193, 0.4);
+    }
+}
+
+.stopwatch-display {
+    animation: digitFlicker 0.1s ease-in-out infinite;
+}
+
+@keyframes digitFlicker {
+    0%, 90%, 100% {
+        opacity: 1;
+    }
+    95% {
+        opacity: 0.95;
+    }
+}
+
+.mystical-stopwatch.running .stopwatch-display {
+    animation: digitFlicker 0.1s ease-in-out infinite,
+               digitGlow 3s ease-in-out infinite;
+}
+
+@keyframes digitGlow {
+    0%, 100% {
+        text-shadow: 0 0 10px rgba(93, 217, 193, 0.5),
+                     0 0 20px rgba(93, 217, 193, 0.3);
+    }
+    50% {
+        text-shadow: 0 0 20px rgba(93, 217, 193, 0.8),
+                     0 0 40px rgba(93, 217, 193, 0.5),
+                     0 0 60px rgba(93, 217, 193, 0.3);
+    }
+}
+
+/* Timer button pulse when active */
+.btn-stop:not(:disabled) {
+    animation: buttonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes buttonPulse {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(255, 140, 66, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 140, 66, 0.6);
+    }
+}

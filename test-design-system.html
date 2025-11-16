@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design System Test - Haunted Chamber</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/themes.css">
+    <link rel="stylesheet" href="styles/components.css">
+</head>
+<body class="theme-night">
+    <div class="app-container">
+        <div class="page-container">
+            <h1>Design System Test</h1>
+            <p class="subtitle">Testing color palette, typography, and micro-interactions</p>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2>Color Palette</h2>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+                    <div style="width: 100px; height: 100px; background: var(--accent-orange); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">Orange</div>
+                    <div style="width: 100px; height: 100px; background: var(--accent-purple); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">Purple</div>
+                    <div style="width: 100px; height: 100px; background: var(--accent-teal); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">Teal</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2>Typography</h2>
+                <h1>Heading 1 - Decorative Font</h1>
+                <h2>Heading 2 - Decorative Font</h2>
+                <h3>Heading 3 - Decorative Font</h3>
+                <p>Body text using sans-serif font for readability. This ensures legible UI across all themes.</p>
+                <p class="subtitle">Subtitle text with italic styling</p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2>Buttons with Micro-interactions</h2>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+                    <button class="btn">Default Button</button>
+                    <button class="btn btn-primary">Primary Button</button>
+                    <button class="btn btn-secondary">Secondary Button</button>
+                    <button class="btn" disabled>Disabled Button</button>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2>Input Fields</h2>
+                <input type="text" class="input" placeholder="Type something..." style="margin-bottom: 1rem;">
+                <textarea class="input textarea" placeholder="Enter a longer message..."></textarea>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2>Toggle Switch</h2>
+                <label class="toggle">
+                    <input type="checkbox">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2>Theme Toggle</h2>
+                <button class="btn" onclick="toggleTheme()">Switch to Day Mode</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const btn = event.target;
+            if (body.classList.contains('theme-night')) {
+                body.classList.remove('theme-night');
+                body.classList.add('theme-day');
+                btn.textContent = 'Switch to Night Mode';
+            } else {
+                body.classList.remove('theme-day');
+                body.classList.add('theme-night');
+                btn.textContent = 'Switch to Day Mode';
+            }
+        }
+    </script>
+</body>
+</html>

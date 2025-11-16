@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haunted Chamber</title>
+    <meta name="description" content="A Halloween-themed productivity app with tasks, focus timer, and mood tracking">
+    
+    <!-- Google Fonts - Spooky Horror Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=Eater&display=swap" rel="stylesheet">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/themes.css">
+    <link rel="stylesheet" href="styles/background.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/animations.css">
+</head>
+<body class="theme-night">
+    <!-- Skip to main content link for screen readers -->
+    <a href="#page-container" class="skip-link">Skip to main content</a>
+    
+    <!-- App Container -->
+    <div id="app" class="app-container">
+        
+        <!-- Background World Layer (Persistent) -->
+        <div id="background-world" class="background-world">
+            <!-- Background elements will be rendered here by JavaScript -->
+        </div>
+        
+        <!-- Navigation Bar -->
+        <nav id="nav-bar" class="nav-bar" role="navigation" aria-label="Main navigation">
+            <div class="nav-icons">
+                <button class="nav-icon" data-route="/" title="Home (1)" aria-label="Navigate to Home">
+                    <span class="icon">🏠</span>
+                </button>
+                <button class="nav-icon" data-route="/tasks" title="Haunted To-Do (2)" aria-label="Navigate to Tasks">
+                    <span class="icon">👻</span>
+                </button>
+                <button class="nav-icon" data-route="/focus" title="Focus Chamber (3)" aria-label="Navigate to Focus">
+                    <span class="icon">⏱️</span>
+                </button>
+                <button class="nav-icon" data-route="/whisper" title="Whisper Well (4)" aria-label="Navigate to Whisper Well">
+                    <span class="icon">🌀</span>
+                </button>
+                <button class="nav-icon" data-route="/mood" title="Mood Tracker (5)" aria-label="Navigate to Mood Tracker">
+                    <span class="icon">😊</span>
+                </button>
+                <button class="nav-icon" data-route="/candle" title="Nightfall Candle (6)" aria-label="Navigate to Candle Timer">
+                    <span class="icon">🕯️</span>
+                </button>
+                <button class="nav-icon" data-route="/settings" title="Settings (7)" aria-label="Navigate to Settings">
+                    <span class="icon">⚙️</span>
+                </button>
+            </div>
+            <div class="nav-controls">
+                <button id="realm-toggle" class="realm-toggle" title="Toggle Night/Day Realm" aria-label="Toggle between Night and Day Realm">
+                    <span class="icon realm-icon"></span>
+                </button>
+                <button id="mute-toggle" class="mute-toggle" title="Toggle Audio" aria-label="Toggle audio">
+                    <span class="icon mute-icon"></span>
+                </button>
+            </div>
+        </nav>
+        
+        <!-- Page Container (Routed Content) -->
+        <main id="page-container" class="page-container" role="main" aria-live="polite">
+            <!-- Page content will be rendered here by router -->
+        </main>
+        
+        <!-- Transition Layer -->
+        <div id="transition-layer" class="transition-layer">
+            <div class="portal-ripple"></div>
+            <div class="skeleton-container">
+                <svg class="skeleton-svg" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Skull -->
+                    <ellipse cx="50" cy="25" rx="18" ry="20" fill="#e8e8e8" stroke="#333" stroke-width="1.5"/>
+                    <circle cx="43" cy="22" r="3" fill="#333"/>
+                    <circle cx="57" cy="22" r="3" fill="#333"/>
+                    <path d="M 45 30 Q 50 33 55 30" stroke="#333" stroke-width="1.5" fill="none"/>
+                    
+                    <!-- Spine/Ribcage -->
+                    <line x1="50" y1="45" x2="50" y2="75" stroke="#e8e8e8" stroke-width="3"/>
+                    <ellipse cx="50" cy="55" rx="12" ry="15" fill="none" stroke="#e8e8e8" stroke-width="2"/>
+                    <line x1="38" y1="50" x2="62" y2="50" stroke="#e8e8e8" stroke-width="2"/>
+                    <line x1="38" y1="55" x2="62" y2="55" stroke="#e8e8e8" stroke-width="2"/>
+                    <line x1="38" y1="60" x2="62" y2="60" stroke="#e8e8e8" stroke-width="2"/>
+                    
+                    <!-- Arms -->
+                    <line x1="50" y1="50" x2="30" y2="65" stroke="#e8e8e8" stroke-width="2.5"/>
+                    <line x1="30" y1="65" x2="25" y2="80" stroke="#e8e8e8" stroke-width="2.5"/>
+                    <line x1="50" y1="50" x2="70" y2="65" stroke="#e8e8e8" stroke-width="2.5"/>
+                    <line x1="70" y1="65" x2="75" y2="80" stroke="#e8e8e8" stroke-width="2.5"/>
+                    
+                    <!-- Pelvis -->
+                    <ellipse cx="50" cy="80" rx="10" ry="6" fill="none" stroke="#e8e8e8" stroke-width="2"/>
+                    
+                    <!-- Legs -->
+                    <line x1="45" y1="85" x2="40" y2="115" stroke="#e8e8e8" stroke-width="2.5"/>
+                    <line x1="40" y1="115" x2="35" y2="140" stroke="#e8e8e8" stroke-width="2.5"/>
+                    <line x1="55" y1="85" x2="60" y2="115" stroke="#e8e8e8" stroke-width="2.5"/>
+                    <line x1="60" y1="115" x2="65" y2="140" stroke="#e8e8e8" stroke-width="2.5"/>
+                </svg>
+                <div class="skeleton-caption">Passing through...</div>
+            </div>
+        </div>
+        
+        <!-- Cursor Trail Container -->
+        <div id="cursor-trail" class="cursor-trail">
+            <!-- Trail particles will be rendered here -->
+        </div>
+        
+    </div>
+    
+    <!-- Copyright Footer -->
+    <footer class="copyright-footer">
+        <p>© 2025 The Spectral Haven — A safe place for wandering spirits. A creation of Mohd Mujtaba Quadri. All rights reserved.</p>
+    </footer>
+    
+    <!-- JavaScript Modules -->
+    <script type="module" src="scripts/main.js"></script>
+</body>
+</html>

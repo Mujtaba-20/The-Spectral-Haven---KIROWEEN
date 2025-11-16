@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Candle Timer - Haunted Chamber</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/themes.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/animations.css">
+</head>
+<body class="theme-night">
+    <div id="app">
+        <div id="page-container"></div>
+    </div>
+
+    <script type="module">
+        import { CandleTimer } from './scripts/components/candle-timer.js';
+
+        // Test in Night Mode
+        console.log('Testing Candle Timer in Night Mode');
+        const candleTimer = new CandleTimer();
+        candleTimer.render();
+
+        // Add button to switch to Day Mode for testing
+        const switchBtn = document.createElement('button');
+        switchBtn.textContent = 'Switch to Day Mode';
+        switchBtn.style.position = 'fixed';
+        switchBtn.style.top = '10px';
+        switchBtn.style.right = '10px';
+        switchBtn.style.zIndex = '9999';
+        switchBtn.style.padding = '10px 20px';
+        switchBtn.style.cursor = 'pointer';
+        
+        switchBtn.addEventListener('click', () => {
+            const body = document.body;
+            if (body.classList.contains('theme-night')) {
+                body.classList.remove('theme-night');
+                body.classList.add('theme-day');
+                switchBtn.textContent = 'Switch to Night Mode';
+                
+                // Update localStorage
+                localStorage.setItem('hauntedChamberSettings', JSON.stringify({ theme: 'day' }));
+                
+                // Re-render
+                candleTimer.render();
+            } else {
+                body.classList.remove('theme-day');
+                body.classList.add('theme-night');
+                switchBtn.textContent = 'Switch to Day Mode';
+                
+                // Update localStorage
+                localStorage.setItem('hauntedChamberSettings', JSON.stringify({ theme: 'night' }));
+                
+                // Re-render
+                candleTimer.render();
+            }
+        });
+        
+        document.body.appendChild(switchBtn);
+    </script>
+</body>
+</html>

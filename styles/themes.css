@@ -1,0 +1,108 @@
+/* Theme Styles - Day and Night mode color schemes */
+
+/* Night Mode (Default) - Deep Dark Background with Glowing Effects (Requirements 14.1, 14.2, 14.6, 14.8) */
+.theme-night {
+    --bg-primary: #0a0a0a; /* Deep dark background (Requirement 14.1) */
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2a2a2a;
+    
+    /* Legible text colors with sufficient contrast (Requirement 14.8) */
+    --text-primary: #e8e8e8;
+    --text-secondary: #a8a8a8;
+    --text-tertiary: #787878;
+    
+    /* Accent colors: Pumpkin Orange, Soft Purple, Ghostly Teal (Requirement 14.2) */
+    --accent-orange: #ff8c42;
+    --accent-purple: #9d7bd8;
+    --accent-teal: #5dd9c1;
+    
+    /* Subtle glow and shadow effects (Requirement 14.6) */
+    --shadow-glow: 0 0 20px rgba(255, 140, 66, 0.3);
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --glow-orange: 0 0 15px rgba(255, 140, 66, 0.4);
+    --glow-purple: 0 0 15px rgba(157, 123, 216, 0.4);
+    --glow-teal: 0 0 15px rgba(93, 217, 193, 0.4);
+    
+    --overlay-bg: rgba(10, 10, 10, 0.8);
+    --border-color: rgba(255, 255, 255, 0.1);
+    
+    --ghost-trail-color: rgba(157, 123, 216, 0.85);
+    --ghost-trail-glow: 0 0 20px rgba(157, 123, 216, 1), 0 0 40px rgba(157, 123, 216, 0.6), 0 0 60px rgba(157, 123, 216, 0.3);
+}
+
+/* Day Mode - Light and Translucent (Requirements 14.2, 14.6, 14.8) */
+.theme-day {
+    --bg-primary: #f5f0e8;
+    --bg-secondary: #e8dfd0;
+    --bg-tertiary: #d8cfc0;
+    
+    /* Legible text colors with sufficient contrast (Requirement 14.8) */
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
+    --text-tertiary: #7a7a7a;
+    
+    /* Accent colors: Pumpkin Orange, Soft Purple, Ghostly Teal (Requirement 14.2) */
+    --accent-orange: #ff7722;
+    --accent-purple: #8b6bc8;
+    --accent-teal: #4ac9b1;
+    
+    /* Subtle glow and shadow effects (Requirement 14.6) */
+    --shadow-glow: 0 0 15px rgba(255, 119, 34, 0.2);
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.15);
+    --glow-orange: 0 0 12px rgba(255, 119, 34, 0.3);
+    --glow-purple: 0 0 12px rgba(139, 107, 200, 0.3);
+    --glow-teal: 0 0 12px rgba(74, 201, 177, 0.3);
+    
+    --overlay-bg: rgba(245, 240, 232, 0.9);
+    --border-color: rgba(0, 0, 0, 0.15);
+    
+    --ghost-trail-color: rgba(139, 107, 200, 0.5);
+    --ghost-trail-glow: 0 0 15px rgba(139, 107, 200, 0.8), 0 0 30px rgba(139, 107, 200, 0.4);
+}
+
+/* Theme-specific adjustments */
+.theme-day .nav-bar {
+    background: rgba(245, 240, 232, 0.9);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.theme-day .nav-icon,
+.theme-day .mute-toggle {
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.theme-day .nav-icon:hover {
+    background: rgba(255, 119, 34, 0.1);
+}
+
+.theme-day .mute-toggle:hover {
+    background: rgba(74, 201, 177, 0.1);
+}
+
+/* Smooth theme transitions */
+body,
+.app-container,
+.nav-bar,
+.nav-icon,
+.mute-toggle,
+.page-container {
+    transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+}
+
+/* Skeleton SVG theme adjustments */
+.theme-day .skeleton-svg {
+    filter: drop-shadow(0 0 10px rgba(42, 42, 42, 0.3));
+}
+
+.theme-day .skeleton-svg ellipse,
+.theme-day .skeleton-svg line,
+.theme-day .skeleton-svg path {
+    fill: #4a4a4a;
+    stroke: #2a2a2a;
+}
+
+.theme-night .skeleton-svg {
+    filter: drop-shadow(0 0 10px rgba(232, 232, 232, 0.5));
+}
