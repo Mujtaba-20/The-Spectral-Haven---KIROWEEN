@@ -247,14 +247,22 @@ export class RadiantSphere {
             const margin = 12;
             // responsive dialog width
             dialogWidth = Math.min(320, Math.max(180, Math.floor(window.innerWidth * 0.28)));
-            // initial candidate: to the right of orb
-            left = Math.round(rect.left + window.scrollX + rect.width + margin);
+
+            // initial candidate: to the right of orb, then nudge left so the dialog sits near orb (not glued)
+            // nudgeFactor moves the dialog left by a percentage of dialogWidth
+            const nudgeFactor = 0.38;
+            let candidateRight = Math.round(rect.left + window.scrollX + rect.width + margin);
+            left = Math.round(candidateRight - Math.floor(dialogWidth * nudgeFactor));
+
             top  = Math.round(rect.top + window.scrollY + (rect.height * 0.08));
 
-            // if the dialog would overflow right edge, flip to left of orb
+            // if the dialog would overflow right edge, flip to left of orb and nudge similarly
             if ((left + dialogWidth + 8) > (window.scrollX + window.innerWidth)) {
+                // position left of orb
                 left = Math.round(rect.left + window.scrollX - dialogWidth - margin);
-                tailLeft = dialogWidth - 20;
+                // nudge slightly toward orb (shift right)
+                left = left + Math.floor(dialogWidth * 0.12);
+                tailLeft = Math.max(12, dialogWidth - 26);
                 dialog.style.transformOrigin = 'top right';
             } else {
                 tailLeft = 10;
@@ -283,7 +291,13 @@ export class RadiantSphere {
             dialog.style.transform = 'translateY(0) scale(1)';
         });
 
-        // outside click handler
+        // outside click handler — attach after current click finishes to avoid immediate self-close
+        if (overlay._onDocClick) {
+            // remove any previous listener first
+            try { document.removeEventListener('click', overlay._onDocClick, { capture: true }); } catch(e){/* ignore */ }
+            overlay._onDocClick = null;
+        }
+
         const onDocClick = (ev) => {
             if (!dialog.contains(ev.target)) {
                 // defer hide slightly to allow dialog internal clicks to process
@@ -292,8 +306,11 @@ export class RadiantSphere {
         };
         overlay._onDocClick = onDocClick;
 
-        document.addEventListener('click', onDocClick, { capture: true });
-        document.addEventListener('keydown', overlay._onKey);
+        // attach listeners on next tick so the click that opened the dialog isn't seen by this handler
+        setTimeout(() => {
+            document.addEventListener('click', onDocClick, { capture: true });
+            document.addEventListener('keydown', overlay._onKey);
+        }, 0);
     }
 
     hideAffirmation() {
@@ -305,21 +322,27 @@ export class RadiantSphere {
             dialog.style.transform = 'translateY(-6px) scale(0.98)';
         }
 
-        // remove global listeners
+        // remove global listeners (capture flag must match)
         if (overlay._onDocClick) {
-            document.removeEventListener('click', overlay._onDocClick, { capture: true });
+            try { document.removeEventListener('click', overlay._onDocClick, { capture: true }); } catch(e){/* ignore */ }
             overlay._onDocClick = null;
         }
         if (overlay._onKey) {
-            document.removeEventListener('keydown', overlay._onKey);
+            try { document.removeEventListener('keydown', overlay._onKey); } catch(e){/* ignore */ }
         }
 
         overlay.style.pointerEvents = 'none';
 
-        // remove from DOM after transition
-        overlay.addEventListener('transitionend', () => {
+        // remove from DOM after dialog transition ends (not overlay)
+        if (dialog) {
+            const remover = () => {
+                if (overlay.parentElement) overlay.parentElement.removeChild(overlay);
+                dialog.removeEventListener('transitionend', remover);
+            };
+            dialog.addEventListener('transitionend', remover);
+        } else {
             if (overlay.parentElement) overlay.parentElement.removeChild(overlay);
-        }, { once: true });
+        }
     }
 
     activateOrb() {
