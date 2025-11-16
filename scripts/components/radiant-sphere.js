@@ -131,7 +131,7 @@ export class RadiantSphere {
         }
     }
 
-    // Replaced: create a dialog anchored to the orb's top-right (appended to body)
+    // create a dialog anchored above the orb (appended to body)
     ensureAffirmationModal() {
         if (this._affModal) return this._affModal;
 
@@ -154,7 +154,7 @@ export class RadiantSphere {
             transform-origin: top left;
             opacity:0;
             transform: translateY(-6px) scale(0.98);
-            transition: opacity 180ms ease, transform 180ms ease;
+            transition: opacity 200ms ease, transform 200ms ease;
 
             /* ✨ Glow styling */
             background: rgba(120, 255, 235, 0.72);
@@ -178,15 +178,15 @@ export class RadiantSphere {
             border: 1px solid rgba(255,255,255,0.35);
         `;
 
-        // small tail pointing to the orb
+        // small tail pointing to the orb (will be positioned horizontally)
         const tail = document.createElement('div');
         tail.style.cssText = `
             position:absolute;
             width:12px;
             height:12px;
             background:inherit;
-            left:8px; top:100%;
-            transform: translateY(-50%) rotate(45deg);
+            left:8px; bottom:-6px; /* tail sits slightly below dialog so it points downwards */
+            transform: rotate(45deg);
             box-shadow: 0 6px 12px rgba(2,6,23,0.08);
         `;
 
@@ -216,9 +216,41 @@ export class RadiantSphere {
         container._text = text;
         container._tail = tail;
         container._onDocClick = null;
+        container._removeTimeout = null;
 
         this._affModal = container;
         return container;
+    }
+
+    playSfx() {
+        // attempt to reset & play the cached sfx; if it fails, create a short-lived instance
+        try {
+            if (this.sfx) {
+                // reset and play
+                this.sfx.pause();
+                this.sfx.currentTime = 0;
+                const p = this.sfx.play();
+                if (p && typeof p.then === 'function') {
+                    p.catch(() => {
+                        // fallback: create temp audio and play
+                        try {
+                            const t = new Audio('/assets/shimmer.mp3');
+                            t.play().catch(()=>{});
+                        } catch(e) {}
+                    });
+                }
+            } else {
+                // no cached sfx; try audioManager or short-lived audio
+                if (window.audioManager && window.audioManager.playSFX) {
+                    window.audioManager.playSFX('shimmer');
+                } else {
+                    const tmp = new Audio('/assets/shimmer.mp3');
+                    tmp.play().catch(()=>{});
+                }
+            }
+        } catch (e) {
+            console.debug('RadiantSphere: sfx play error', e);
+        }
     }
 
     showAffirmation(message) {
@@ -233,57 +265,76 @@ export class RadiantSphere {
         // append overlay to body if not present
         if (!document.body.contains(overlay)) document.body.appendChild(overlay);
 
-        // compute orb position and desired dialog location (top-right of orb)
+        // compute orb position and desired dialog location (above the orb, with gap)
         const orbEl = document.getElementById('orb-wrapper') || document.querySelector('.orb-wrapper') || document.querySelector('#orb');
         const rect = orbEl ? orbEl.getBoundingClientRect() : null;
 
         // default position (center-top fallback)
-        let left = Math.round(window.innerWidth / 2 - 160);
-        let top = 80 + window.scrollY;
-        let tailLeft = 12;
         let dialogWidth = 280;
+        dialog.style.width = `${dialogWidth}px`;
 
         if (rect) {
             const margin = 12;
             // responsive dialog width
             dialogWidth = Math.min(320, Math.max(180, Math.floor(window.innerWidth * 0.28)));
+            dialog.style.width = `${dialogWidth}px`;
 
-            // initial candidate: to the right of orb, then nudge left so the dialog sits near orb (not glued)
-            // nudgeFactor moves the dialog left by a percentage of dialogWidth
+            // compute left so dialog sits slightly left of the orb's right edge (not glued)
             const nudgeFactor = 0.38;
-            let candidateRight = Math.round(rect.left + window.scrollX + rect.width + margin);
-            left = Math.round(candidateRight - Math.floor(dialogWidth * nudgeFactor));
+            const candidateRight = Math.round(rect.left + window.scrollX + rect.width + margin);
+            let left = Math.round(candidateRight - Math.floor(dialogWidth * nudgeFactor));
 
-            top  = Math.round(rect.top + window.scrollY + (rect.height * 0.08));
+            // measure height after width applied so we can position above
+            // force reflow
+            const measuredHeight = dialog.offsetHeight || 80;
+            const gap = 14; // space between dialog's tail and orb
+            let top = Math.round(rect.top + window.scrollY - measuredHeight - gap);
 
-            // if the dialog would overflow right edge, flip to left of orb and nudge similarly
-            if ((left + dialogWidth + 8) > (window.scrollX + window.innerWidth)) {
-                // position left of orb
-                left = Math.round(rect.left + window.scrollX - dialogWidth - margin);
-                // nudge slightly toward orb (shift right)
-                left = left + Math.floor(dialogWidth * 0.12);
-                tailLeft = Math.max(12, dialogWidth - 26);
-                dialog.style.transformOrigin = 'top right';
-            } else {
-                tailLeft = 10;
+            // if not enough space above, fall back to right-side placement
+            const minTop = 8 + window.scrollY;
+            if (top < minTop) {
+                // try right-of-orb placement (slightly above orb center)
+                left = Math.round(rect.left + window.scrollX + rect.width + margin - Math.floor(dialogWidth * nudgeFactor));
+                top = Math.round(rect.top + window.scrollY + (rect.height * 0.08));
                 dialog.style.transformOrigin = 'top left';
+                tail.style.bottom = ''; // ensure tail is positioned by top/bottom appropriately
+                tail.style.left = `${Math.round(10)}px`;
+            } else {
+                // dialog above orb; tail should point downwards (tail is positioned with bottom:-6px)
+                dialog.style.transformOrigin = 'bottom left';
+                tail.style.bottom = '-6px';
             }
 
-            // keep dialog within vertical bounds
-            const minTop = 8 + window.scrollY;
-            const maxTop = window.scrollY + window.innerHeight - 140;
-            if (top < minTop) top = minTop;
-            if (top > maxTop) top = maxTop;
+            // prevent overflow right
+            const maxLeft = Math.round(window.scrollX + window.innerWidth - dialogWidth - 8);
+            if (left > maxLeft) left = maxLeft;
 
-            dialog.style.width = `${dialogWidth}px`;
+            // prevent overflow left
+            const minLeft = Math.round(window.scrollX + 8);
+            if (left < minLeft) left = minLeft;
+
+            // set computed left/top
+            dialog.style.left = `${left}px`;
+            dialog.style.top = `${top}px`;
+
+            // position the tail horizontally so it visually points to orb center
+            const orbCenterX = Math.round(rect.left + window.scrollX + rect.width / 2);
+            let tailLeft = orbCenterX - left - 6; // center tail (tail width 12 -> half 6)
+            // clamp tail left so it doesn't overflow dialog edges
+            tailLeft = Math.max(10, Math.min(Math.round(dialogWidth - 22), tailLeft));
+            tail.style.left = `${tailLeft}px`;
         } else {
-            dialog.style.width = `${dialogWidth}px`;
+            // fallback: center-top
+            const left = Math.round(window.innerWidth / 2 - dialogWidth / 2);
+            const top = 80 + window.scrollY;
+            dialog.style.left = `${left}px`;
+            dialog.style.top = `${top}px`;
+            tail.style.left = `12px`;
+            dialog.style.transformOrigin = 'top left';
         }
 
-        // apply position
-        dialog.style.left = `${Math.round(left)}px`;
-        dialog.style.top = `${Math.round(top)}px`;
-        tail.style.left = `${Math.round(tailLeft)}px`;
+        // make sure dialog is interactive
+        overlay.style.pointerEvents = 'auto';
 
         // entrance animation
         requestAnimationFrame(() => {
@@ -291,22 +342,20 @@ export class RadiantSphere {
             dialog.style.transform = 'translateY(0) scale(1)';
         });
 
-        // outside click handler — attach after current click finishes to avoid immediate self-close
+        // outside click handler — remove any previous then attach after a tick
         if (overlay._onDocClick) {
-            // remove any previous listener first
             try { document.removeEventListener('click', overlay._onDocClick, { capture: true }); } catch(e){/* ignore */ }
             overlay._onDocClick = null;
         }
 
         const onDocClick = (ev) => {
             if (!dialog.contains(ev.target)) {
-                // defer hide slightly to allow dialog internal clicks to process
                 setTimeout(() => this.hideAffirmation(), 0);
             }
         };
         overlay._onDocClick = onDocClick;
 
-        // attach listeners on next tick so the click that opened the dialog isn't seen by this handler
+        // attach listeners on next turn to avoid closing immediately from the opening click
         setTimeout(() => {
             document.addEventListener('click', onDocClick, { capture: true });
             document.addEventListener('keydown', overlay._onKey);
@@ -335,11 +384,16 @@ export class RadiantSphere {
 
         // remove from DOM after dialog transition ends (not overlay)
         if (dialog) {
+            let removed = false;
             const remover = () => {
+                if (removed) return;
+                removed = true;
                 if (overlay.parentElement) overlay.parentElement.removeChild(overlay);
-                dialog.removeEventListener('transitionend', remover);
             };
-            dialog.addEventListener('transitionend', remover);
+            // use transitionend with a fallback timeout in case it doesn't fire
+            dialog.addEventListener('transitionend', remover, { once: true });
+            // fallback after 300ms
+            setTimeout(remover, 350);
         } else {
             if (overlay.parentElement) overlay.parentElement.removeChild(overlay);
         }
@@ -397,16 +451,7 @@ export class RadiantSphere {
         }, 400);
 
         // Play shimmer audio when orb is clicked
-        try {
-            if (this.sfx) {
-                this.sfx.currentTime = 0;
-                this.sfx.play().catch(() => {});
-            } else if (window.audioManager) {
-                window.audioManager.playSFX && window.audioManager.playSFX('shimmer');
-            }
-        } catch (e) {
-            console.debug('RadiantSphere: audio playback failed', e);
-        }
+        this.playSfx();
     }
 
     getRandomAffirmation() {
