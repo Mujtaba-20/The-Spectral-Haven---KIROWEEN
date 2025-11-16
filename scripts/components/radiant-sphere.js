@@ -222,13 +222,13 @@ export class RadiantSphere {
         return container;
     }
 
-   // Replace your current playSfx() with this
+// Replace your existing playSfx() with this
 playSfx() {
-  // lazy init of audio context + buffer
+  // lazy init AudioContext and state flags
   if (!this._audioCtx) {
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      this._audioCtx = new AudioContext();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      this._audioCtx = new AC();
       this._sfxBuffer = null;
       this._sfxLoading = false;
     } catch (e) {
@@ -236,28 +236,63 @@ playSfx() {
     }
   }
 
-  // helper to actually play a decoded buffer
+  // helper to play a decoded buffer
   const playBuffer = (buffer) => {
     try {
       const src = this._audioCtx.createBufferSource();
       src.buffer = buffer;
       const gain = this._audioCtx.createGain();
-      gain.gain.value = 0.9; // adjust volume if you want
+      gain.gain.value = 0.9;
       src.connect(gain);
       gain.connect(this._audioCtx.destination);
       src.start(0);
-      // stop after buffer length (safe cleanup)
-      setTimeout(() => { try { src.disconnect(); gain.disconnect(); } catch(e){} }, (buffer.duration + 0.1) * 1000);
+      // cleanup after done
+      src.onended = () => {
+        try { src.disconnect(); gain.disconnect(); } catch(e) {}
+      };
     } catch (e) {
-      // fallback to simple Audio element
-      try { new Audio('/assets/shimmer.mp3').play().catch(()=>{}); } catch(e){/* ignore */ }
+      // if anything goes wrong, fallback to oscillator
+      playOscillator();
     }
   };
 
-  // if we have a decoded buffer already, play it
+  // fallback oscillator beep (guarantees a sound without external file)
+  const playOscillator = () => {
+    try {
+      if (!this._audioCtx) {
+        // try the plain Audio element fallback
+        new Audio('/assets/shimmer.mp3').play().catch(()=>{});
+        return;
+      }
+      if (this._audioCtx.state === 'suspended') {
+        this._audioCtx.resume().catch(()=>{});
+      }
+      const o = this._audioCtx.createOscillator();
+      const g = this._audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 880; // pitch
+      g.gain.value = 0.0001;
+      // quick envelope
+      const now = this._audioCtx.currentTime;
+      g.gain.cancelScheduledValues(now);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.5, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      o.connect(g);
+      g.connect(this._audioCtx.destination);
+      o.start(now);
+      o.stop(now + 0.25);
+      // cleanup
+      o.onended = () => { try { o.disconnect(); g.disconnect(); } catch(e) {} };
+    } catch (e) {
+      // final fallback to Audio element
+      try { new Audio('/assets/shimmer.mp3').play().catch(()=>{}); } catch(e){}
+    }
+  };
+
+  // if we already decoded buffer -> play it
   if (this._sfxBuffer) {
-    // ensure AudioContext is resumed (some browsers start it suspended)
-    if (this._audioCtx.state === 'suspended') {
+    if (this._audioCtx && this._audioCtx.state === 'suspended') {
       this._audioCtx.resume().then(() => playBuffer(this._sfxBuffer)).catch(() => playBuffer(this._sfxBuffer));
     } else {
       playBuffer(this._sfxBuffer);
@@ -265,13 +300,13 @@ playSfx() {
     return;
   }
 
-  // if loading is in progress, fallback to new Audio to avoid delay
+  // if loading already in progress use simple oscillator fallback to avoid delay
   if (this._sfxLoading) {
-    try { new Audio('/assets/shimmer.mp3').play().catch(()=>{}); } catch(e){/* ignore */ }
+    playOscillator();
     return;
   }
 
-  // try to fetch + decode the audio (do this once)
+  // try to fetch + decode the file, cache it, then play
   if (this._audioCtx) {
     this._sfxLoading = true;
     fetch('/assets/shimmer.mp3', { cache: 'force-cache' })
@@ -283,7 +318,6 @@ playSfx() {
       .then(decoded => {
         this._sfxBuffer = decoded;
         this._sfxLoading = false;
-        // resume if suspended then play
         if (this._audioCtx.state === 'suspended') {
           this._audioCtx.resume().then(() => playBuffer(this._sfxBuffer)).catch(() => playBuffer(this._sfxBuffer));
         } else {
@@ -291,18 +325,16 @@ playSfx() {
         }
       })
       .catch(err => {
-        // fallback to plain Audio if anything fails
         this._sfxLoading = false;
-        try { new Audio('/assets/shimmer.mp3').play().catch(()=>{}); } catch(e) {}
-        console.debug('RadiantSphere: sfx WebAudio failed, falling back to Audio element', err);
+        console.debug('RadiantSphere: sfx decode failed, falling back to oscillator or Audio element', err);
+        playOscillator();
       });
     return;
   }
 
-  // final fallback if AudioContext couldn't be created
-  try { new Audio('/assets/shimmer.mp3').play().catch(()=>{}); } catch(e) {}
+  // final fallback: plain Audio element
+  try { new Audio('/assets/shimmer.mp3').play().catch(()=>{ playOscillator(); }); } catch(e){ playOscillator(); }
 }
-
 
     showAffirmation(message) {
         const overlay = this.ensureAffirmationModal();
