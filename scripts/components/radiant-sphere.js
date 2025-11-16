@@ -18,6 +18,17 @@ export class RadiantSphere {
             "The universe remembers your light.",
             "There is warmth coiling in your future."
         ];
+
+        // Added: guarded SFX and modal cache
+        this.sfx = null;
+        try {
+            this.sfx = new Audio('/assets/shimmer.mp3'); // optional; 404 won't break UI
+            this.sfx.preload = 'auto';
+        } catch (e) {
+            this.sfx = null;
+            console.debug('RadiantSphere: sfx init failed', e);
+        }
+        this._affModal = null; // cached overlay element
     }
 
     render() {
@@ -120,6 +131,73 @@ export class RadiantSphere {
         }
     }
 
+    // Added: create a modal appended to document.body to avoid stacking issues
+    ensureAffirmationModal() {
+        if (this._affModal) return this._affModal;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'radiant-affirmation-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,10,12,0.55);z-index:9999999;opacity:0;pointer-events:none;transition:opacity .18s;';
+
+        const modal = document.createElement('div');
+        modal.id = 'radiant-affirmation-modal';
+        modal.style.cssText = 'position:relative;background:linear-gradient(180deg,#ffffff,#f6f6ff);padding:18px;border-radius:12px;max-width:540px;width:88%;box-shadow:0 12px 30px rgba(0,0,0,.45);transform:translateY(8px);';
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.setAttribute('aria-label', 'Close affirmation');
+        close.innerText = '✕';
+        close.style.cssText = 'position:absolute;right:12px;top:8px;border:0;background:transparent;font-size:18px;cursor:pointer';
+        close.addEventListener('click', () => this.hideAffirmation());
+
+        const text = document.createElement('div');
+        text.id = 'radiant-affirmation-text';
+        text.style.cssText = 'font-size:18px;line-height:1.4;color:#111;text-align:center;padding:6px 4px;';
+
+        modal.appendChild(close);
+        modal.appendChild(text);
+        overlay.appendChild(modal);
+
+        // close on overlay click (but not when clicking the modal)
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) this.hideAffirmation(); });
+
+        // close on Escape
+        const onKey = (e) => { if (e.key === 'Escape') this.hideAffirmation(); };
+        overlay._onKey = onKey;
+
+        this._affModal = overlay;
+        return overlay;
+    }
+
+    showAffirmation(message) {
+        const overlay = this.ensureAffirmationModal();
+        const text = overlay.querySelector('#radiant-affirmation-text');
+        if (text) text.textContent = message;
+
+        // Append to body to avoid being hidden behind transformed parents
+        if (!document.body.contains(overlay)) document.body.appendChild(overlay);
+
+        // force reflow then show
+        requestAnimationFrame(() => {
+            overlay.style.pointerEvents = 'auto';
+            overlay.style.opacity = '1';
+            document.addEventListener('keydown', overlay._onKey);
+        });
+    }
+
+    hideAffirmation() {
+        const overlay = this._affModal;
+        if (!overlay) return;
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+        document.removeEventListener('keydown', overlay._onKey);
+        overlay.addEventListener('transitionend', () => {
+            if (overlay.parentElement) overlay.parentElement.removeChild(overlay);
+        }, { once: true });
+    }
+
     activateOrb() {
         const orbWrapper = document.getElementById('orb-wrapper');
         const affirmationCloud = document.getElementById('affirmation-cloud');
@@ -143,6 +221,8 @@ export class RadiantSphere {
         // Show affirmation cloud after animation
         setTimeout(() => {
             const affirmation = this.getRandomAffirmation();
+
+            // Keep the in-page cloud for graceful degrade (if styles work)
             if (affirmationText) {
                 affirmationText.textContent = affirmation;
                 affirmationText.classList.add('affirmation-fade-in');
@@ -164,11 +244,21 @@ export class RadiantSphere {
             if (revealContainer) {
                 revealContainer.style.display = 'block';
             }
+
+            // Show the robust modal appended to body (fixes stacking / z-index problems)
+            this.showAffirmation(affirmation);
         }, 400);
 
         // Play shimmer audio when orb is clicked
-        if (window.audioManager) {
-            window.audioManager.playSFX('shimmer');
+        try {
+            if (this.sfx) {
+                this.sfx.currentTime = 0;
+                this.sfx.play().catch(() => {});
+            } else if (window.audioManager) {
+                window.audioManager.playSFX && window.audioManager.playSFX('shimmer');
+            }
+        } catch (e) {
+            console.debug('RadiantSphere: audio playback failed', e);
         }
     }
 
@@ -186,6 +276,12 @@ export class RadiantSphere {
     destroy() {
         if (this.container) {
             this.container.innerHTML = '';
+        }
+
+        // cleanup modal if present
+        if (this._affModal && this._affModal.parentElement) {
+            this._affModal.parentElement.removeChild(this._affModal);
+            this._affModal = null;
         }
     }
 }
