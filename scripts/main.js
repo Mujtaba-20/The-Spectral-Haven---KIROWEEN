@@ -249,3 +249,9 @@ if (document.readyState === 'loading') {
     const app = new HauntedChamberApp();
     app.init();
 }
+import { RadiantSphere } from "./components/radiant-sphere.js";
+
+window.addEventListener("DOMContentLoaded", () => {
+    const sphere = new RadiantSphere();
+    sphere.render();
+});
