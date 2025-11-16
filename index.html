@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Haunted Chamber</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>The Spectral Haven</title>
     <meta name="description" content="A Halloween-themed productivity app with tasks, focus timer, and mood tracking">
     
     <!-- Google Fonts - Spooky Horror Fonts -->
@@ -28,6 +31,88 @@
         <!-- Background World Layer (Persistent) -->
         <div id="background-world" class="background-world">
             <!-- Background elements will be rendered here by JavaScript -->
+            
+            <!-- Floating Ghost between pumpkins (Left) -->
+            <div class="ground-ghost ground-ghost-left">
+                <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Ghost body -->
+                    <path d="M 50 10 
+                             Q 30 10 20 30 
+                             Q 10 50 10 70 
+                             L 10 100 
+                             Q 10 110 15 110 
+                             L 20 105 
+                             Q 25 100 30 105 
+                             L 35 110 
+                             Q 40 115 45 110 
+                             L 50 105 
+                             Q 55 100 60 105 
+                             L 65 110 
+                             Q 70 115 75 110 
+                             L 80 105 
+                             Q 85 100 90 110 
+                             L 90 70 
+                             Q 90 50 80 30 
+                             Q 70 10 50 10 Z" 
+                          fill="#e8e8e8" 
+                          stroke="rgba(255, 255, 255, 0.5)" 
+                          stroke-width="2"/>
+                    
+                    <!-- Left eye -->
+                    <ellipse cx="35" cy="45" rx="8" ry="12" fill="#000"/>
+                    
+                    <!-- Right eye -->
+                    <ellipse cx="65" cy="45" rx="8" ry="12" fill="#000"/>
+                    
+                    <!-- Mouth (upside down smile / frown) -->
+                    <path d="M 35 60 Q 50 70 65 60" 
+                          stroke="#000" 
+                          stroke-width="3" 
+                          fill="none" 
+                          stroke-linecap="round"/>
+                </svg>
+            </div>
+            
+            <!-- Floating Ghost on the right side -->
+            <div class="ground-ghost ground-ghost-right">
+                <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Ghost body -->
+                    <path d="M 50 10 
+                             Q 30 10 20 30 
+                             Q 10 50 10 70 
+                             L 10 100 
+                             Q 10 110 15 110 
+                             L 20 105 
+                             Q 25 100 30 105 
+                             L 35 110 
+                             Q 40 115 45 110 
+                             L 50 105 
+                             Q 55 100 60 105 
+                             L 65 110 
+                             Q 70 115 75 110 
+                             L 80 105 
+                             Q 85 100 90 110 
+                             L 90 70 
+                             Q 90 50 80 30 
+                             Q 70 10 50 10 Z" 
+                          fill="#e8e8e8" 
+                          stroke="rgba(255, 255, 255, 0.5)" 
+                          stroke-width="2"/>
+                    
+                    <!-- Left eye -->
+                    <ellipse cx="35" cy="45" rx="8" ry="12" fill="#000"/>
+                    
+                    <!-- Right eye -->
+                    <ellipse cx="65" cy="45" rx="8" ry="12" fill="#000"/>
+                    
+                    <!-- Mouth (upside down smile / frown) -->
+                    <path d="M 35 60 Q 50 70 65 60" 
+                          stroke="#000" 
+                          stroke-width="3" 
+                          fill="none" 
+                          stroke-linecap="round"/>
+                </svg>
+            </div>
         </div>
         
         <!-- Navigation Bar -->

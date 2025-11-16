@@ -441,3 +441,166 @@ h3 {
         padding: var(--spacing-xs) var(--spacing-sm);
     }
 }
+
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+    /* Reduce animations for better performance */
+    * {
+        animation-duration: 0.5s !important;
+    }
+    
+    /* Optimize touch interactions */
+    button, .btn, .mini-widget, .nav-icon {
+        -webkit-tap-highlight-color: rgba(157, 123, 216, 0.3);
+        touch-action: manipulation;
+    }
+    
+    /* Reduce blur effects for performance */
+    .card, .mini-widget {
+        backdrop-filter: none;
+    }
+    
+    /* Optimize scrolling */
+    .page-container {
+        -webkit-overflow-scrolling: touch;
+        overflow-y: auto;
+    }
+    
+    /* Reduce shadow complexity */
+    .spectral-title {
+        text-shadow: 
+            0 0 10px rgba(157, 123, 216, 0.8),
+            0 0 20px rgba(157, 123, 216, 0.6);
+    }
+    
+    /* Optimize cursor trail for mobile */
+    .cursor-trail {
+        display: none;
+    }
+    
+    /* Reduce particle effects */
+    .background-world {
+        opacity: 0.5;
+    }
+}
+
+/* Touch-friendly sizing */
+@media (max-width: 768px) {
+    /* Larger touch targets */
+    .nav-icon {
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    .btn, button {
+        min-height: 44px;
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    /* Better spacing for mobile */
+    .mini-widgets {
+        gap: var(--spacing-md);
+    }
+    
+    /* Adjust page container for mobile */
+    .page-container {
+        padding-bottom: calc(var(--spacing-xl) + 40px); /* Extra space for copyright */
+    }
+}
+
+/* Prevent text selection on interactive elements */
+.nav-icon, .btn, button, .mini-widget {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Hardware acceleration for animations */
+.candle-flame, .mini-widget, .nav-icon, .transition-layer {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+}
+
+
+/* Floating Ghosts on ground */
+.ground-ghost {
+    position: fixed;
+    bottom: 30px;
+    width: 80px;
+    height: 96px;
+    pointer-events: none;
+    opacity: 0.95;
+    filter: drop-shadow(0 4px 15px rgba(255, 255, 255, 0.4));
+    z-index: 5;
+}
+
+.ground-ghost svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Left ghost positioning */
+.ground-ghost-left {
+    left: 13%;
+    animation: groundGhostFloat 4s ease-in-out infinite;
+}
+
+/* Right ghost positioning */
+.ground-ghost-right {
+    right: 13%;
+    animation: groundGhostFloat2 4.5s ease-in-out infinite 0.5s;
+}
+
+@keyframes groundGhostFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(-3deg);
+    }
+    25% {
+        transform: translateY(-15px) rotate(2deg);
+    }
+    50% {
+        transform: translateY(-8px) rotate(-2deg);
+    }
+    75% {
+        transform: translateY(-18px) rotate(3deg);
+    }
+}
+
+@keyframes groundGhostFloat2 {
+    0%, 100% {
+        transform: translateY(0) rotate(3deg);
+    }
+    25% {
+        transform: translateY(-12px) rotate(-2deg);
+    }
+    50% {
+        transform: translateY(-20px) rotate(2deg);
+    }
+    75% {
+        transform: translateY(-10px) rotate(-3deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .ground-ghost {
+        width: 60px;
+        height: 72px;
+        bottom: 25px;
+    }
+    
+    .ground-ghost-left {
+        left: 10%;
+    }
+    
+    .ground-ghost-right {
+        right: 10%;
+    }
+}

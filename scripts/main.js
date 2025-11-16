@@ -23,7 +23,7 @@ class HauntedChamberApp {
     }
 
     async init() {
-        console.log('🎃 Initializing Haunted Chamber...');
+        console.log('🎃 Initializing The Spectral Haven...');
 
         // Initialize core systems
         this.initSettings();
@@ -35,7 +35,7 @@ class HauntedChamberApp {
         this.initNavigation();
         this.initKeyboardShortcuts();
 
-        console.log('✨ Haunted Chamber initialized successfully');
+        console.log('✨ The Spectral Haven initialized successfully');
     }
 
     initSettings() {

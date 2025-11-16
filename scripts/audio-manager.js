@@ -3,6 +3,7 @@
 export class AudioManager {
     constructor() {
         this.ambient = null;
+        this.ambientCreep = null; // Secondary ambient track
         this.sfx = {};
         this.muted = false;
         this.volume = 0.3; // Default volume (30%)
@@ -15,6 +16,9 @@ export class AudioManager {
         
         // Load ambient sound - Trees.mp3 as main background
         this.loadAmbient('assets/audio/Trees.mp3');
+        
+        // Load secondary ambient - creep.mp3 at lower volume
+        this.loadAmbientCreep('assets/audio/creep.mp3');
         
         // Load SFX files
         this.loadSFX('task-complete.mp3', 'skeleton-enter.mp3', 'release.mp3');
@@ -79,6 +83,16 @@ export class AudioManager {
             }
         }
         
+        if (this.ambientCreep) {
+            if (this.muted) {
+                this.ambientCreep.pause();
+            } else {
+                this.ambientCreep.play().catch(err => {
+                    console.log('Creep audio playback prevented:', err);
+                });
+            }
+        }
+        
         // Update UI state
         this.updateMuteToggleUI();
     }
@@ -109,11 +123,19 @@ export class AudioManager {
                 console.log('Audio playback prevented:', err);
             });
         }
+        if (this.ambientCreep && !this.muted) {
+            this.ambientCreep.play().catch(err => {
+                console.log('Creep audio playback prevented:', err);
+            });
+        }
     }
 
     pause() {
         if (this.ambient) {
             this.ambient.pause();
+        }
+        if (this.ambientCreep) {
+            this.ambientCreep.pause();
         }
     }
 
@@ -121,6 +143,10 @@ export class AudioManager {
         if (this.ambient) {
             this.ambient.pause();
             this.ambient.currentTime = 0;
+        }
+        if (this.ambientCreep) {
+            this.ambientCreep.pause();
+            this.ambientCreep.currentTime = 0;
         }
     }
 
@@ -130,6 +156,11 @@ export class AudioManager {
         if (!this.muted && this.ambient) {
             this.ambient.play().catch(err => {
                 console.log('Ambient playback prevented:', err);
+            });
+        }
+        if (!this.muted && this.ambientCreep) {
+            this.ambientCreep.play().catch(err => {
+                console.log('Creep ambient playback prevented:', err);
             });
         }
     }
@@ -150,6 +181,10 @@ export class AudioManager {
         this.volume = Math.max(0, Math.min(1, volume)); // Clamp between 0 and 1
         if (this.ambient) {
             this.ambient.volume = this.volume;
+        }
+        if (this.ambientCreep) {
+            // Keep creep at 50% of main volume
+            this.ambientCreep.volume = this.volume * 0.5;
         }
     }
 
@@ -174,6 +209,30 @@ export class AudioManager {
             });
         } else {
             console.log('🔇 Audio is muted');
+        }
+    }
+    
+    loadAmbientCreep(src) {
+        this.ambientCreep = new Audio(src);
+        this.ambientCreep.loop = true;
+        // Set creep.mp3 to 50% of the main ambient volume (lower volume)
+        this.ambientCreep.volume = this.volume * 0.5;
+        
+        // Handle loading errors gracefully
+        this.ambientCreep.addEventListener('error', (e) => {
+            console.error('❌ Creep ambient audio file not found or failed to load:', src, e);
+        });
+        
+        this.ambientCreep.addEventListener('canplaythrough', () => {
+            console.log('✅ Creep audio file loaded successfully:', src);
+        });
+        
+        if (!this.muted) {
+            this.ambientCreep.play().catch(err => {
+                console.warn('⚠️ Creep ambient audio playback prevented (user interaction required):', err.message);
+            });
+        } else {
+            console.log('🔇 Creep audio is muted');
         }
     }
 

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor Trail Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+        }
+        
+        h1 {
+            color: #ff8c42;
+            text-align: center;
+        }
+        
+        .instructions {
+            max-width: 600px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .cursor-trail {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        
+        .trail-particle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+            pointer-events: none;
+            will-change: transform, opacity;
+            transition: background 0.5s ease;
+        }
+        
+        .mist-particle {
+            filter: blur(8px);
+            mix-blend-mode: screen;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎃 Cursor Trail Test</h1>
+    <div class="instructions">
+        <p>Move your cursor around the screen to see the ghostly trail effect.</p>
+        <p>The trail should follow your cursor smoothly with a colorful mist effect.</p>
+        <p>Colors will change every 3 seconds automatically.</p>
+    </div>
+    
+    <div id="cursor-trail" class="cursor-trail"></div>
+    
+    <script type="module">
+        import { CursorTrail } from './scripts/cursor-trail.js';
+        
+        const trail = new CursorTrail();
+        trail.init();
+        
+        console.log('✨ Cursor trail initialized');
+    </script>
+</body>
+</html>

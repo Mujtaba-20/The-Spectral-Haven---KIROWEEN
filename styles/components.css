@@ -2,6 +2,38 @@
 
 /* Mute Toggle Button - Styles moved to main.css to avoid duplication */
 
+/* Spectral Title - Glowing animated title */
+.spectral-title {
+    font-family: var(--font-heading);
+    font-size: 3rem;
+    text-align: center;
+    margin: var(--spacing-xl) 0 var(--spacing-md);
+    color: var(--accent-orange);
+    text-shadow: 
+        0 0 10px rgba(255, 140, 66, 0.8),
+        0 0 20px rgba(255, 140, 66, 0.6),
+        0 0 30px rgba(255, 140, 66, 0.4),
+        0 0 40px rgba(255, 140, 66, 0.2);
+    animation: titleGlow 3s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+    0%, 100% {
+        text-shadow: 
+            0 0 10px rgba(255, 140, 66, 0.8),
+            0 0 20px rgba(255, 140, 66, 0.6),
+            0 0 30px rgba(255, 140, 66, 0.4),
+            0 0 40px rgba(255, 140, 66, 0.2);
+    }
+    50% {
+        text-shadow: 
+            0 0 15px rgba(255, 140, 66, 1),
+            0 0 30px rgba(255, 140, 66, 0.8),
+            0 0 45px rgba(255, 140, 66, 0.6),
+            0 0 60px rgba(255, 140, 66, 0.4);
+    }
+}
+
 /* Cursor Trail */
 .cursor-trail {
     position: fixed;
@@ -23,6 +55,32 @@
     pointer-events: none;
     will-change: transform, opacity;
     transition: background 0.8s ease, box-shadow 0.8s ease;
+}
+
+.ghost-cursor {
+    position: absolute;
+    width: 40px;
+    height: 48px;
+    pointer-events: none;
+    will-change: transform;
+    opacity: 0.9;
+    transition: filter 0.8s ease;
+    animation: ghostFloat 3s ease-in-out infinite;
+}
+
+.ghost-cursor svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes ghostFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(-2deg);
+    }
+    50% {
+        transform: translateY(-8px) rotate(2deg);
+    }
 }
 
 /* Mist cluster effect */

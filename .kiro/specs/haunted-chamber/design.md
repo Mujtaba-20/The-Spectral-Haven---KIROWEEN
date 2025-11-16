@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Haunted Chamber is a client-side single-page application (SPA) built with vanilla JavaScript, HTML5, and CSS3. The architecture uses a component-based approach with a persistent background layer and a routing system for page transitions. All data is stored in localStorage, and the Whisper Well feature explicitly avoids any data persistence.
+The The Spectral Haven is a client-side single-page application (SPA) built with vanilla JavaScript, HTML5, and CSS3. The architecture uses a component-based approach with a persistent background layer and a routing system for page transitions. All data is stored in localStorage, and the Whisper Well feature explicitly avoids any data persistence.
 
 ## Architecture
 

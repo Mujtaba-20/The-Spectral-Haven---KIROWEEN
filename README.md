@@ -1,4 +1,4 @@
-# 🎃 Haunted Chamber
+# 🎃 The Spectral Haven
 
 A Halloween-themed productivity web application featuring task management, focus timer, mood tracking, and atmospheric interactions.
 
@@ -172,7 +172,7 @@ Requires a modern browser with ES6 module support.
 ## Project Structure
 
 ```
-haunted-chamber/
+the-spectral-haven/
 ├── index.html              # Main HTML file
 ├── styles/                 # CSS files
 │   ├── main.css           # Core styles

@@ -3,7 +3,7 @@
 export class CursorTrail {
     constructor() {
         this.particles = [];
-        this.maxParticles = 20; // More particles for mist cluster
+        this.maxParticles = 12; // Reduced particles for better performance
         this.mouseX = 0;
         this.mouseY = 0;
         this.container = null;
@@ -26,7 +26,18 @@ export class CursorTrail {
         this.minVolume = 0.01;    // Minimum volume when idle (reduced)
     }
 
+    isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+            || window.innerWidth <= 768;
+    }
+
     init() {
+        // Don't initialize on mobile devices for better performance
+        if (this.isMobileDevice()) {
+            console.log('📱 Cursor trail disabled on mobile device');
+            return;
+        }
+        
         this.container = document.getElementById('cursor-trail');
         if (!this.container) {
             console.error('Cursor trail container not found');
@@ -67,26 +78,23 @@ export class CursorTrail {
     }
 
     createParticles() {
-        // Initialize particle array for mist cluster
+        // Initialize particle array - particles centered on cursor
         for (let i = 0; i < this.maxParticles; i++) {
             const particle = document.createElement('div');
             particle.className = 'trail-particle mist-particle';
             this.container.appendChild(particle);
             
-            // Random offset for cluster effect
-            const offsetX = (Math.random() - 0.5) * 30;
-            const offsetY = (Math.random() - 0.5) * 30;
-            
+            // No offset - all particles at cursor point, layered effect
             this.particles.push({
                 element: particle,
                 x: 0,
                 y: 0,
                 targetX: 0,
                 targetY: 0,
-                offsetX: offsetX,
-                offsetY: offsetY,
-                delay: i * 0.05,
-                size: 15 + Math.random() * 25 // Random sizes for mist effect
+                offsetX: 0,
+                offsetY: 0,
+                size: 15 + Math.random() * 20,
+                delay: i * 0.02 // Slight delay for trailing effect
             });
             
             // Set initial size
@@ -157,28 +165,35 @@ export class CursorTrail {
     }
 
     animate() {
-        // Update particle positions for mist cluster effect
+        // Update particle positions - all centered on cursor with trailing effect
         const currentColor = this.colors[this.currentColorIndex];
         
         this.particles.forEach((particle, index) => {
-            // Easing effect with cluster offset
-            const delay = 0.2 * (index + 1);
-            particle.targetX = this.mouseX + particle.offsetX;
-            particle.targetY = this.mouseY + particle.offsetY;
+            // Much faster easing for instant response - first particle follows immediately
+            const easingFactor = index === 0 ? 1 : 0.3 - (index * 0.015);
+            particle.targetX = this.mouseX;
+            particle.targetY = this.mouseY;
             
-            // Smooth interpolation for misty trailing effect
-            particle.x += (particle.targetX - particle.x) * (1 - delay);
-            particle.y += (particle.targetY - particle.y) * (1 - delay);
+            // Smooth interpolation for trailing effect
+            particle.x += (particle.targetX - particle.x) * easingFactor;
+            particle.y += (particle.targetY - particle.y) * easingFactor;
             
-            // Apply CSS transforms with cluster offset
-            particle.element.style.transform = `translate3d(${particle.x}px, ${particle.y}px, 0)`;
+            // Center the particle on cursor point by offsetting by half its size
+            const offsetX = particle.x - (particle.size / 2);
+            const offsetY = particle.y - (particle.size / 2);
             
-            // Fade based on position in trail
+            // Use will-change and transform for better performance
+            particle.element.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
+            
+            // Fade based on trail position
             const opacity = (1 - (index / this.maxParticles)) * 0.6;
             particle.element.style.opacity = opacity;
             
-            // Apply current color
-            particle.element.style.background = currentColor;
+            // Only update color if it changed (performance optimization)
+            if (particle.lastColor !== currentColor) {
+                particle.element.style.background = currentColor;
+                particle.lastColor = currentColor;
+            }
         });
 
         this.animationFrame = requestAnimationFrame(() => this.animate());

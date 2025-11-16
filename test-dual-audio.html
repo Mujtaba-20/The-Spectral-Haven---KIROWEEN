@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Audio Test - The Spectral Haven</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        h1 {
+            color: #ff8c42;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border: 2px solid #ff8c42;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #ff8c42;
+            color: #0a0a0a;
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            padding: 1rem 2rem;
+            background: #1a1a1a;
+            border: 2px solid #9d7bd8;
+            border-radius: 8px;
+            min-width: 300px;
+        }
+        
+        .status p {
+            margin: 0.5rem 0;
+        }
+        
+        .playing {
+            color: #5dd9c1;
+        }
+        
+        .paused {
+            color: #ff8c42;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 Dual Ambient Audio Test</h1>
+    
+    <div class="status">
+        <p><strong>Trees.mp3:</strong> <span id="trees-status" class="paused">Not Playing</span></p>
+        <p><strong>creep.mp3:</strong> <span id="creep-status" class="paused">Not Playing</span></p>
+        <p><strong>Volume Ratio:</strong> Trees 30% | Creep 15%</p>
+    </div>
+    
+    <div class="controls">
+        <button id="play-btn">▶️ Play Both</button>
+        <button id="pause-btn">⏸️ Pause Both</button>
+        <button id="mute-btn">🔇 Toggle Mute</button>
+    </div>
+    
+    <p style="max-width: 600px; text-align: center; color: #a0a0a0;">
+        This test plays both Trees.mp3 and creep.mp3 simultaneously. 
+        The creep.mp3 track plays at 50% of the Trees.mp3 volume for a layered ambient effect.
+    </p>
+    
+    <script type="module">
+        import { AudioManager } from './scripts/audio-manager.js';
+        
+        const audioManager = new AudioManager();
+        audioManager.init();
+        
+        const treesStatus = document.getElementById('trees-status');
+        const creepStatus = document.getElementById('creep-status');
+        const playBtn = document.getElementById('play-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const muteBtn = document.getElementById('mute-btn');
+        
+        function updateStatus() {
+            if (audioManager.ambient && !audioManager.ambient.paused) {
+                treesStatus.textContent = 'Playing';
+                treesStatus.className = 'playing';
+            } else {
+                treesStatus.textContent = 'Paused';
+                treesStatus.className = 'paused';
+            }
+            
+            if (audioManager.ambientCreep && !audioManager.ambientCreep.paused) {
+                creepStatus.textContent = 'Playing';
+                creepStatus.className = 'playing';
+            } else {
+                creepStatus.textContent = 'Paused';
+                creepStatus.className = 'paused';
+            }
+            
+            muteBtn.textContent = audioManager.muted ? '🔊 Unmute' : '🔇 Mute';
+        }
+        
+        playBtn.addEventListener('click', () => {
+            audioManager.unmute();
+            audioManager.play();
+            setTimeout(updateStatus, 100);
+        });
+        
+        pauseBtn.addEventListener('click', () => {
+            audioManager.pause();
+            setTimeout(updateStatus, 100);
+        });
+        
+        muteBtn.addEventListener('click', () => {
+            audioManager.toggleMute();
+            setTimeout(updateStatus, 100);
+        });
+        
+        // Initial status
+        setTimeout(updateStatus, 500);
+        
+        // Update status every second
+        setInterval(updateStatus, 1000);
+        
+        console.log('🎵 Dual audio test initialized');
+        console.log('Trees.mp3 volume:', audioManager.ambient?.volume);
+        console.log('creep.mp3 volume:', audioManager.ambientCreep?.volume);
+    </script>
+</body>
+</html>
