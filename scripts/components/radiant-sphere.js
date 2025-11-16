@@ -131,68 +131,179 @@ export class RadiantSphere {
         }
     }
 
-    // Added: create a modal appended to document.body to avoid stacking issues
+    // Replaced: create a dialog anchored to the orb's top-right (appended to body)
     ensureAffirmationModal() {
         if (this._affModal) return this._affModal;
 
-        const overlay = document.createElement('div');
-        overlay.id = 'radiant-affirmation-overlay';
-        overlay.setAttribute('role', 'dialog');
-        overlay.setAttribute('aria-modal', 'true');
-        overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,10,12,0.55);z-index:9999999;opacity:0;pointer-events:none;transition:opacity .18s;';
+        // full-screen container (pointer-events:none so clicks pass through except dialog)
+        const container = document.createElement('div');
+        container.id = 'radiant-affirmation-overlay';
+        container.style.cssText = `
+            position:fixed;
+            inset:0;
+            pointer-events:none;
+            z-index:9999999;
+        `;
 
-        const modal = document.createElement('div');
-        modal.id = 'radiant-affirmation-modal';
-        modal.style.cssText = 'position:relative;background:linear-gradient(180deg,#ffffff,#f6f6ff);padding:18px;border-radius:12px;max-width:540px;width:88%;box-shadow:0 12px 30px rgba(0,0,0,.45);transform:translateY(8px);';
+        // dialog box (positioned dynamically)
+        const dialog = document.createElement('div');
+        dialog.id = 'radiant-affirmation-dialog';
+        dialog.style.cssText = `
+            position:fixed;
+            pointer-events:auto;
+            transform-origin: top left;
+            opacity:0;
+            transform: translateY(-6px) scale(0.98);
+            transition: opacity 180ms ease, transform 180ms ease;
+            background: linear-gradient(180deg,#ffffff,#fbfbff);
+            color: #111;
+            padding: 12px 14px;
+            border-radius: 10px;
+            max-width: 320px;
+            box-shadow: 0 10px 30px rgba(2,6,23,0.35);
+            font-size: 15px;
+            line-height: 1.35;
+        `;
+
+        // small tail pointing to the orb
+        const tail = document.createElement('div');
+        tail.style.cssText = `
+            position:absolute;
+            width:12px;
+            height:12px;
+            background:inherit;
+            left:8px; top:100%;
+            transform: translateY(-50%) rotate(45deg);
+            box-shadow: 0 6px 12px rgba(2,6,23,0.08);
+        `;
+
+        const text = document.createElement('div');
+        text.id = 'radiant-affirmation-text-dialog';
+        text.style.cssText = 'padding-right:6px; padding-left:6px;';
 
         const close = document.createElement('button');
         close.type = 'button';
         close.setAttribute('aria-label', 'Close affirmation');
         close.innerText = '✕';
-        close.style.cssText = 'position:absolute;right:12px;top:8px;border:0;background:transparent;font-size:18px;cursor:pointer';
+        close.style.cssText = `
+            position:absolute; right:8px; top:6px; border:0; background:transparent; cursor:pointer;
+            font-size:13px; line-height:1;
+        `;
         close.addEventListener('click', () => this.hideAffirmation());
 
-        const text = document.createElement('div');
-        text.id = 'radiant-affirmation-text';
-        text.style.cssText = 'font-size:18px;line-height:1.4;color:#111;text-align:center;padding:6px 4px;';
+        dialog.appendChild(close);
+        dialog.appendChild(text);
+        dialog.appendChild(tail);
+        container.appendChild(dialog);
 
-        modal.appendChild(close);
-        modal.appendChild(text);
-        overlay.appendChild(modal);
-
-        // close on overlay click (but not when clicking the modal)
-        overlay.addEventListener('click', (e) => { if (e.target === overlay) this.hideAffirmation(); });
-
-        // close on Escape
+        // handlers stored for cleanup
         const onKey = (e) => { if (e.key === 'Escape') this.hideAffirmation(); };
-        overlay._onKey = onKey;
+        container._onKey = onKey;
+        container._dialog = dialog;
+        container._text = text;
+        container._tail = tail;
+        container._onDocClick = null;
 
-        this._affModal = overlay;
-        return overlay;
+        this._affModal = container;
+        return container;
     }
 
     showAffirmation(message) {
         const overlay = this.ensureAffirmationModal();
-        const text = overlay.querySelector('#radiant-affirmation-text');
-        if (text) text.textContent = message;
+        const dialog = overlay._dialog;
+        const textEl = overlay._text;
+        const tail = overlay._tail;
+        if (!dialog || !textEl) return;
 
-        // Append to body to avoid being hidden behind transformed parents
+        textEl.textContent = message;
+
+        // append overlay to body if not present
         if (!document.body.contains(overlay)) document.body.appendChild(overlay);
 
-        // force reflow then show
+        // compute orb position and desired dialog location (top-right of orb)
+        const orbEl = document.getElementById('orb-wrapper') || document.querySelector('.orb-wrapper') || document.querySelector('#orb');
+        const rect = orbEl ? orbEl.getBoundingClientRect() : null;
+
+        // default position (center-top fallback)
+        let left = Math.round(window.innerWidth / 2 - 160);
+        let top = 80 + window.scrollY;
+        let tailLeft = 12;
+        let dialogWidth = 280;
+
+        if (rect) {
+            const margin = 12;
+            // responsive dialog width
+            dialogWidth = Math.min(320, Math.max(180, Math.floor(window.innerWidth * 0.28)));
+            // initial candidate: to the right of orb
+            left = Math.round(rect.left + window.scrollX + rect.width + margin);
+            top  = Math.round(rect.top + window.scrollY + (rect.height * 0.08));
+
+            // if the dialog would overflow right edge, flip to left of orb
+            if ((left + dialogWidth + 8) > (window.scrollX + window.innerWidth)) {
+                left = Math.round(rect.left + window.scrollX - dialogWidth - margin);
+                tailLeft = dialogWidth - 20;
+                dialog.style.transformOrigin = 'top right';
+            } else {
+                tailLeft = 10;
+                dialog.style.transformOrigin = 'top left';
+            }
+
+            // keep dialog within vertical bounds
+            const minTop = 8 + window.scrollY;
+            const maxTop = window.scrollY + window.innerHeight - 140;
+            if (top < minTop) top = minTop;
+            if (top > maxTop) top = maxTop;
+
+            dialog.style.width = `${dialogWidth}px`;
+        } else {
+            dialog.style.width = `${dialogWidth}px`;
+        }
+
+        // apply position
+        dialog.style.left = `${Math.round(left)}px`;
+        dialog.style.top = `${Math.round(top)}px`;
+        tail.style.left = `${Math.round(tailLeft)}px`;
+
+        // entrance animation
         requestAnimationFrame(() => {
-            overlay.style.pointerEvents = 'auto';
-            overlay.style.opacity = '1';
-            document.addEventListener('keydown', overlay._onKey);
+            dialog.style.opacity = '1';
+            dialog.style.transform = 'translateY(0) scale(1)';
         });
+
+        // outside click handler
+        const onDocClick = (ev) => {
+            if (!dialog.contains(ev.target)) {
+                // defer hide slightly to allow dialog internal clicks to process
+                setTimeout(() => this.hideAffirmation(), 0);
+            }
+        };
+        overlay._onDocClick = onDocClick;
+
+        document.addEventListener('click', onDocClick, { capture: true });
+        document.addEventListener('keydown', overlay._onKey);
     }
 
     hideAffirmation() {
         const overlay = this._affModal;
         if (!overlay) return;
-        overlay.style.opacity = '0';
+        const dialog = overlay._dialog;
+        if (dialog) {
+            dialog.style.opacity = '0';
+            dialog.style.transform = 'translateY(-6px) scale(0.98)';
+        }
+
+        // remove global listeners
+        if (overlay._onDocClick) {
+            document.removeEventListener('click', overlay._onDocClick, { capture: true });
+            overlay._onDocClick = null;
+        }
+        if (overlay._onKey) {
+            document.removeEventListener('keydown', overlay._onKey);
+        }
+
         overlay.style.pointerEvents = 'none';
-        document.removeEventListener('keydown', overlay._onKey);
+
+        // remove from DOM after transition
         overlay.addEventListener('transitionend', () => {
             if (overlay.parentElement) overlay.parentElement.removeChild(overlay);
         }, { once: true });
