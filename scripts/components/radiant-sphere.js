@@ -222,9 +222,21 @@ export class RadiantSphere {
         return container;
     }
 
-// Replace your existing playSfx() with this
+// Replace existing playSfx() in RadiantSphere with this
 playSfx() {
-  // lazy init AudioContext and state flags
+  // Prefer app-wide AudioManager if present and shimmer is loaded
+  try {
+    if (window.audioManager && typeof window.audioManager.playSFX === 'function') {
+      // If audio manager is muted, it will no-op internally
+      // This is the preferred path because it uses the same assets and settings
+      window.audioManager.playSFX('shimmer');
+      return;
+    }
+  } catch (e) {
+    console.debug('RadiantSphere: audioManager playSFX call failed, falling back', e);
+  }
+
+  // --- Fallback: local WebAudio/oscillator approach (guarantees a sound) ---
   if (!this._audioCtx) {
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -236,7 +248,32 @@ playSfx() {
     }
   }
 
-  // helper to play a decoded buffer
+  const playOscillator = () => {
+    try {
+      if (!this._audioCtx) {
+        // final fallback to plain Audio element (non-blocking)
+        new Audio('assets/audio/shimmer.mp3').play().catch(()=>{});
+        return;
+      }
+      if (this._audioCtx.state === 'suspended') this._audioCtx.resume().catch(()=>{});
+      const o = this._audioCtx.createOscillator();
+      const g = this._audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 880;
+      const now = this._audioCtx.currentTime;
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.6, now + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      o.connect(g);
+      g.connect(this._audioCtx.destination);
+      o.start(now);
+      o.stop(now + 0.25);
+      o.onended = () => { try { o.disconnect(); g.disconnect(); } catch(e) {} };
+    } catch (e) {
+      try { new Audio('assets/audio/shimmer.mp3').play().catch(()=>{}); } catch(e) {}
+    }
+  };
+
   const playBuffer = (buffer) => {
     try {
       const src = this._audioCtx.createBufferSource();
@@ -246,70 +283,32 @@ playSfx() {
       src.connect(gain);
       gain.connect(this._audioCtx.destination);
       src.start(0);
-      // cleanup after done
-      src.onended = () => {
-        try { src.disconnect(); gain.disconnect(); } catch(e) {}
-      };
+      src.onended = () => { try { src.disconnect(); gain.disconnect(); } catch(e) {} };
     } catch (e) {
-      // if anything goes wrong, fallback to oscillator
       playOscillator();
     }
   };
 
-  // fallback oscillator beep (guarantees a sound without external file)
-  const playOscillator = () => {
-    try {
-      if (!this._audioCtx) {
-        // try the plain Audio element fallback
-        new Audio('/assets/shimmer.mp3').play().catch(()=>{});
-        return;
-      }
-      if (this._audioCtx.state === 'suspended') {
-        this._audioCtx.resume().catch(()=>{});
-      }
-      const o = this._audioCtx.createOscillator();
-      const g = this._audioCtx.createGain();
-      o.type = 'sine';
-      o.frequency.value = 880; // pitch
-      g.gain.value = 0.0001;
-      // quick envelope
-      const now = this._audioCtx.currentTime;
-      g.gain.cancelScheduledValues(now);
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.exponentialRampToValueAtTime(0.5, now + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-      o.connect(g);
-      g.connect(this._audioCtx.destination);
-      o.start(now);
-      o.stop(now + 0.25);
-      // cleanup
-      o.onended = () => { try { o.disconnect(); g.disconnect(); } catch(e) {} };
-    } catch (e) {
-      // final fallback to Audio element
-      try { new Audio('/assets/shimmer.mp3').play().catch(()=>{}); } catch(e){}
-    }
-  };
-
-  // if we already decoded buffer -> play it
+  // If we already decoded a buffer, use it
   if (this._sfxBuffer) {
     if (this._audioCtx && this._audioCtx.state === 'suspended') {
-      this._audioCtx.resume().then(() => playBuffer(this._sfxBuffer)).catch(() => playBuffer(this._sfxBuffer));
+      this._audioCtx.resume().then(()=>playBuffer(this._sfxBuffer)).catch(()=>playBuffer(this._sfxBuffer));
     } else {
       playBuffer(this._sfxBuffer);
     }
     return;
   }
 
-  // if loading already in progress use simple oscillator fallback to avoid delay
+  // If loading is already in progress, play oscillator to avoid delay
   if (this._sfxLoading) {
     playOscillator();
     return;
   }
 
-  // try to fetch + decode the file, cache it, then play
+  // Try to fetch and decode the local shimmer file (assets/audio/shimmer.mp3)
   if (this._audioCtx) {
     this._sfxLoading = true;
-    fetch('/assets/shimmer.mp3', { cache: 'force-cache' })
+    fetch('assets/audio/shimmer.mp3', { cache: 'force-cache' })
       .then(resp => {
         if (!resp.ok) throw new Error('sfx fetch failed: ' + resp.status);
         return resp.arrayBuffer();
@@ -319,22 +318,23 @@ playSfx() {
         this._sfxBuffer = decoded;
         this._sfxLoading = false;
         if (this._audioCtx.state === 'suspended') {
-          this._audioCtx.resume().then(() => playBuffer(this._sfxBuffer)).catch(() => playBuffer(this._sfxBuffer));
+          this._audioCtx.resume().then(()=>playBuffer(this._sfxBuffer)).catch(()=>playBuffer(this._sfxBuffer));
         } else {
           playBuffer(this._sfxBuffer);
         }
       })
       .catch(err => {
         this._sfxLoading = false;
-        console.debug('RadiantSphere: sfx decode failed, falling back to oscillator or Audio element', err);
+        console.debug('RadiantSphere: shimmer decode failed, using oscillator fallback', err);
         playOscillator();
       });
     return;
   }
 
-  // final fallback: plain Audio element
-  try { new Audio('/assets/shimmer.mp3').play().catch(()=>{ playOscillator(); }); } catch(e){ playOscillator(); }
+  // Final fallback: play Audio element
+  try { new Audio('assets/audio/shimmer.mp3').play().catch(()=>{ playOscillator(); }); } catch(e){ playOscillator(); }
 }
+
 
     showAffirmation(message) {
         const overlay = this.ensureAffirmationModal();
