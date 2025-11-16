@@ -222,36 +222,87 @@ export class RadiantSphere {
         return container;
     }
 
-    playSfx() {
-        // attempt to reset & play the cached sfx; if it fails, create a short-lived instance
-        try {
-            if (this.sfx) {
-                // reset and play
-                this.sfx.pause();
-                this.sfx.currentTime = 0;
-                const p = this.sfx.play();
-                if (p && typeof p.then === 'function') {
-                    p.catch(() => {
-                        // fallback: create temp audio and play
-                        try {
-                            const t = new Audio('/assets/shimmer.mp3');
-                            t.play().catch(()=>{});
-                        } catch(e) {}
-                    });
-                }
-            } else {
-                // no cached sfx; try audioManager or short-lived audio
-                if (window.audioManager && window.audioManager.playSFX) {
-                    window.audioManager.playSFX('shimmer');
-                } else {
-                    const tmp = new Audio('/assets/shimmer.mp3');
-                    tmp.play().catch(()=>{});
-                }
-            }
-        } catch (e) {
-            console.debug('RadiantSphere: sfx play error', e);
-        }
+   // Replace your current playSfx() with this
+playSfx() {
+  // lazy init of audio context + buffer
+  if (!this._audioCtx) {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      this._audioCtx = new AudioContext();
+      this._sfxBuffer = null;
+      this._sfxLoading = false;
+    } catch (e) {
+      this._audioCtx = null;
     }
+  }
+
+  // helper to actually play a decoded buffer
+  const playBuffer = (buffer) => {
+    try {
+      const src = this._audioCtx.createBufferSource();
+      src.buffer = buffer;
+      const gain = this._audioCtx.createGain();
+      gain.gain.value = 0.9; // adjust volume if you want
+      src.connect(gain);
+      gain.connect(this._audioCtx.destination);
+      src.start(0);
+      // stop after buffer length (safe cleanup)
+      setTimeout(() => { try { src.disconnect(); gain.disconnect(); } catch(e){} }, (buffer.duration + 0.1) * 1000);
+    } catch (e) {
+      // fallback to simple Audio element
+      try { new Audio('/assets/shimmer.mp3').play().catch(()=>{}); } catch(e){/* ignore */ }
+    }
+  };
+
+  // if we have a decoded buffer already, play it
+  if (this._sfxBuffer) {
+    // ensure AudioContext is resumed (some browsers start it suspended)
+    if (this._audioCtx.state === 'suspended') {
+      this._audioCtx.resume().then(() => playBuffer(this._sfxBuffer)).catch(() => playBuffer(this._sfxBuffer));
+    } else {
+      playBuffer(this._sfxBuffer);
+    }
+    return;
+  }
+
+  // if loading is in progress, fallback to new Audio to avoid delay
+  if (this._sfxLoading) {
+    try { new Audio('/assets/shimmer.mp3').play().catch(()=>{}); } catch(e){/* ignore */ }
+    return;
+  }
+
+  // try to fetch + decode the audio (do this once)
+  if (this._audioCtx) {
+    this._sfxLoading = true;
+    fetch('/assets/shimmer.mp3', { cache: 'force-cache' })
+      .then(resp => {
+        if (!resp.ok) throw new Error('sfx fetch failed: ' + resp.status);
+        return resp.arrayBuffer();
+      })
+      .then(ab => this._audioCtx.decodeAudioData(ab))
+      .then(decoded => {
+        this._sfxBuffer = decoded;
+        this._sfxLoading = false;
+        // resume if suspended then play
+        if (this._audioCtx.state === 'suspended') {
+          this._audioCtx.resume().then(() => playBuffer(this._sfxBuffer)).catch(() => playBuffer(this._sfxBuffer));
+        } else {
+          playBuffer(this._sfxBuffer);
+        }
+      })
+      .catch(err => {
+        // fallback to plain Audio if anything fails
+        this._sfxLoading = false;
+        try { new Audio('/assets/shimmer.mp3').play().catch(()=>{}); } catch(e) {}
+        console.debug('RadiantSphere: sfx WebAudio failed, falling back to Audio element', err);
+      });
+    return;
+  }
+
+  // final fallback if AudioContext couldn't be created
+  try { new Audio('/assets/shimmer.mp3').play().catch(()=>{}); } catch(e) {}
+}
+
 
     showAffirmation(message) {
         const overlay = this.ensureAffirmationModal();
