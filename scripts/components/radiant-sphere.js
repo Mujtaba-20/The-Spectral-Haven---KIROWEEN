@@ -155,14 +155,27 @@ export class RadiantSphere {
             opacity:0;
             transform: translateY(-6px) scale(0.98);
             transition: opacity 180ms ease, transform 180ms ease;
-            background: linear-gradient(180deg,#ffffff,#fbfbff);
-            color: #111;
-            padding: 12px 14px;
-            border-radius: 10px;
+
+            /* ✨ Glow styling */
+            background: rgba(120, 255, 235, 0.72);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+
+            border-radius: 14px;
+            padding: 14px 18px;
+
+            /* Outer glow */
+            box-shadow:
+                0 0 12px rgba(120, 255, 235, 0.55),
+                0 0 28px rgba(120, 255, 235, 0.35),
+                0 8px 22px rgba(0, 0, 0, 0.35);
+
+            color: #0a0d12;
             max-width: 320px;
-            box-shadow: 0 10px 30px rgba(2,6,23,0.35);
-            font-size: 15px;
-            line-height: 1.35;
+            font-size: 16px;
+            line-height: 1.45;
+
+            border: 1px solid rgba(255,255,255,0.35);
         `;
 
         // small tail pointing to the orb
