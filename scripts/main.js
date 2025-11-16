@@ -11,6 +11,9 @@ import { FocusChamber } from './components/focus-chamber.js';
 import { WhisperWell } from './components/whisper-well.js';
 import { MoodTracker } from './components/mood-tracker.js';
 import { CandleTimer } from './components/candle-timer.js';
+import { SpookyTicTacToe } from './components/spooky-tictactoe.js';
+import { SpookyTitleGenerator } from './components/spooky-title-generator.js';
+import { RadiantSphere } from './components/radiant-sphere.js';
 import { Settings } from './components/settings.js';
 
 class HauntedChamberApp {
@@ -149,6 +152,9 @@ class HauntedChamberApp {
         this.router.register('/whisper', WhisperWell);
         this.router.register('/mood', MoodTracker);
         this.router.register('/candle', CandleTimer);
+        this.router.register('/tictactoe', SpookyTicTacToe);
+        this.router.register('/title-generator', SpookyTitleGenerator);
+        this.router.register('/radiant-sphere', RadiantSphere);
         this.router.register('/settings', Settings);
         
         // Start router
@@ -212,7 +218,10 @@ class HauntedChamberApp {
             '4': '/whisper',
             '5': '/mood',
             '6': '/candle',
-            '7': '/settings'
+            '7': '/tictactoe',
+            '8': '/title-generator',
+            '9': '/radiant-sphere',
+            '0': '/settings'
         };
 
         document.addEventListener('keydown', (e) => {

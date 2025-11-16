@@ -21,7 +21,7 @@ export class AudioManager {
         this.loadAmbientCreep('assets/audio/creep.mp3');
         
         // Load SFX files
-        this.loadSFX('task-complete.mp3', 'skeleton-enter.mp3', 'release.mp3');
+        this.loadSFX('task-complete.mp3', 'skeleton-enter.mp3', 'release.mp3', 'shimmer.mp3', 'win.mp3');
         
         // Load page transition sound
         this.loadTransitionSound();

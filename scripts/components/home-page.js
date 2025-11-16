@@ -27,6 +27,9 @@ export class HomePage {
                     ${this.renderPortalWidget()}
                     ${this.renderMoodWidget(moodData)}
                     ${this.renderCandleWidget()}
+                    ${this.renderTicTacToeWidget()}
+                    ${this.renderTitleGeneratorWidget()}
+                    ${this.renderRadiantSphereWidget()}
                     ${this.renderSettingsWidget()}
                 </div>
             </div>
@@ -35,8 +38,64 @@ export class HomePage {
         this.attachEventListeners();
         this.startFocusTimer();
         
+        // Show welcome modal on first visit
+        this.showWelcomeModal();
+        
         // Play intro music when homepage loads
         this.playIntro();
+    }
+
+    showWelcomeModal() {
+        // Check if user has seen welcome modal
+        const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+        
+        if (!hasSeenWelcome) {
+            const modal = document.createElement('div');
+            modal.className = 'welcome-modal';
+            modal.innerHTML = `
+                <div class="welcome-content">
+                    <div class="welcome-sparkles">
+                        <div class="sparkle-dot"></div>
+                        <div class="sparkle-dot"></div>
+                        <div class="sparkle-dot"></div>
+                        <div class="sparkle-dot"></div>
+                        <div class="sparkle-dot"></div>
+                    </div>
+                    <h1 class="welcome-title">The Spectral Haven</h1>
+                    <p class="welcome-subtitle">
+                        Welcome, traveler. The Grove awakens with every step you take. 
+                        The Spectral Haven is a cozy little creation — stitched from strange tools, 
+                        whispering components, and reanimated ideas that all wake up when you step inside. 
+                        It's a haunted workshop where everything feels alive, curious, and just a little enchanted. 
+                        Enjoy this Haunted Journey!!!
+                    </p>
+                    <button class="welcome-close" id="welcome-close">
+                        ✨ Enter The Haven ✨
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close modal on button click
+            const closeBtn = document.getElementById('welcome-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    modal.style.animation = 'modalFadeIn 0.3s ease-out reverse';
+                    setTimeout(() => {
+                        modal.remove();
+                        localStorage.setItem('hasSeenWelcome', 'true');
+                    }, 300);
+                });
+            }
+            
+            // Play shimmer sound when modal appears
+            if (window.audioManager) {
+                setTimeout(() => {
+                    window.audioManager.playSFX('shimmer');
+                }, 200);
+            }
+        }
     }
 
     playIntro() {
@@ -333,5 +392,35 @@ export class HomePage {
         if (this.storageListener) {
             window.removeEventListener('storage', this.storageListener);
         }
+    }
+
+    renderTicTacToeWidget() {
+        return `
+            <div class="card mini-widget mini-game-widget" data-route="/tictactoe">
+                <div class="widget-icon">🎃</div>
+                <h3>Spooky Tic-Tac-Toe</h3>
+                <p class="card-subtitle">Ghost vs Pumpkin battle.</p>
+            </div>
+        `;
+    }
+
+    renderTitleGeneratorWidget() {
+        return `
+            <div class="card mini-widget mini-title-widget" data-route="/title-generator">
+                <div class="widget-icon">📸</div>
+                <h3>Title Generator</h3>
+                <p class="card-subtitle">Get spooky titles from images.</p>
+            </div>
+        `;
+    }
+
+    renderRadiantSphereWidget() {
+        return `
+            <div class="card mini-widget mini-sphere-widget" data-route="/radiant-sphere">
+                <div class="widget-icon">🔮</div>
+                <h3>Radiant Sphere</h3>
+                <p class="card-subtitle">Receive mystical affirmations.</p>
+            </div>
+        `;
     }
 }
