@@ -1,4 +1,4 @@
-// Nightfall Candle Timer Component - wax strips removed
+// Nightfall Candle Timer Component - Option B (fixed + improved)
 
 export class CandleTimer {
     constructor() {
@@ -14,6 +14,11 @@ export class CandleTimer {
         // caches
         this._candleOriginals = null;
         this._smoothState = { flameDy: 0 };
+        this._flickerSeed = Math.random() * 10000;
+        this._lastAnimateTime = 0;
+
+        // bind for rAF so we can cancel reliably
+        this.animate = this.animate.bind(this);
     }
 
     getSettings() {
@@ -41,8 +46,12 @@ export class CandleTimer {
             setTimeout(() => {
                 try {
                     this.attachEventListeners();
-                    this._cacheCandleOriginals(); // populate cache early
-                    this.updateCandleVisual(1.0); // ensure visuals match initial state
+                    // cache after DOM paints
+                    requestAnimationFrame(() => {
+                        this._cacheCandleOriginals();
+                        this.updateCandleVisual(1.0); // ensure visuals match initial state
+                        this.updateDisplay();
+                    });
                 } catch (e) {
                     console.error('CandleTimer.render init error', e);
                 }
@@ -65,7 +74,7 @@ export class CandleTimer {
     }
 
     renderCandleTimer() {
-        // NOTE: Removed the static wax-buildup-permanent group (the long wax strips).
+        // kept your simplified SVG layout but the code expects those classes/structure
         return `
             <div class="card candle-timer-container">
                 <div class="candle-controls">
@@ -134,8 +143,6 @@ export class CandleTimer {
                         <g class="candle-wax-container">
                             <rect class="candle-wax" x="30" y="65" width="40" height="115" fill="url(#waxGradient)" rx="2"/>
                             
-                            <!-- Removed static wax-buildup-permanent group (strips) -->
-                            
                             <!-- Wax drips container (dynamic drops only) -->
                             <g class="wax-drips"></g>
                         </g>
@@ -155,10 +162,11 @@ export class CandleTimer {
             const durationBtns = document.querySelectorAll('.duration-btn');
             durationBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const minutes = parseFloat(e.target.getAttribute('data-duration'));
+                    const minutes = parseFloat(e.currentTarget.getAttribute('data-duration'));
+                    if (isNaN(minutes)) return;
                     this.setDuration(minutes);
                     durationBtns.forEach(b => b.classList.remove('selected'));
-                    e.target.classList.add('selected');
+                    e.currentTarget.classList.add('selected');
                 });
             });
 
@@ -176,11 +184,19 @@ export class CandleTimer {
 
     setDuration(minutes) {
         if (this.running) return;
-        this.duration = minutes * 60 * 1000;
+        if (!minutes || isNaN(minutes) || minutes <= 0) {
+            this.duration = 0;
+        } else {
+            // data-duration is in minutes; 0.5 => 30 seconds
+            this.duration = Math.round(minutes * 60 * 1000);
+        }
         this.elapsed = 0;
         this.updateDisplay();
         const startBtn = document.getElementById('start-btn');
-        if (startBtn) startBtn.disabled = false;
+        if (startBtn) startBtn.disabled = this.duration === 0;
+        // clear any completion message
+        const msg = document.querySelector('.completion-message');
+        if (msg) msg.classList.remove('visible');
     }
 
     start() {
@@ -196,7 +212,11 @@ export class CandleTimer {
         if (window.audioManager) window.audioManager.playLoopingSFX('candle-timer');
 
         this.startDripAnimation();
-        this.animate();
+        // start RAF loop
+        if (!this.animationFrame) {
+            this._lastAnimateTime = Date.now();
+            this.animationFrame = requestAnimationFrame(this.animate);
+        }
     }
 
     pause() {
@@ -217,6 +237,7 @@ export class CandleTimer {
     }
 
     reset() {
+        // fully stop
         this.running = false;
         this.elapsed = 0;
         this.startTime = null;
@@ -232,40 +253,77 @@ export class CandleTimer {
         if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
         this.animationFrame = null;
 
-        // reset caches so visuals return to original state
-        try {
-            this._candleOriginals = null;
-            this._smoothState = { flameDy: 0 };
-            this._cacheCandleOriginals();
-            this.updateCandleVisual(1.0);
-            const msg = document.querySelector('.completion-message');
-            if (msg) msg.classList.remove('visible');
-            const flame = document.querySelector('.candle-flame');
-            if (flame) flame.style.opacity = '1';
-            const smoke = document.querySelector('.candle-smoke');
-            if (smoke) smoke.style.opacity = '0';
-        } catch (e) {
-            console.error('CandleTimer.reset error', e);
-        }
+        // restore visuals after the next paint so DOM changes (if any) are applied
+        requestAnimationFrame(() => {
+            try {
+                // remove any dynamic drips / buildups
+                const dripsContainer = document.querySelector('.wax-drips');
+                if (dripsContainer) dripsContainer.innerHTML = '';
+
+                // reset caches so visuals return to original state
+                this._candleOriginals = null;
+                this._smoothState = { flameDy: 0 };
+                this._cacheCandleOriginals();
+                this.updateCandleVisual(1.0);
+
+                const msg = document.querySelector('.completion-message');
+                if (msg) {
+                    msg.classList.remove('visible');
+                    msg.textContent = '';
+                }
+                const flame = document.querySelector('.candle-flame');
+                if (flame) {
+                    flame.style.transition = '';
+                    flame.style.opacity = '1';
+                    flame.setAttribute('transform', ''); // remove any transform
+                }
+                const smoke = document.querySelector('.candle-smoke');
+                if (smoke) smoke.style.opacity = '0';
+            } catch (e) {
+                console.error('CandleTimer.reset error', e);
+            }
+        });
     }
 
     animate() {
-        if (!this.running) return;
+        // RAF-driven animation loop; respects this.running
+        if (!this.running) {
+            // ensure nothing left running
+            if (this.animationFrame) {
+                cancelAnimationFrame(this.animationFrame);
+                this.animationFrame = null;
+            }
+            return;
+        }
+
         this.elapsed = Date.now() - this.startTime;
-        const progress = Math.min(1, this.elapsed / this.duration);
+        const progress = Math.min(1, this.elapsed / Math.max(1, this.duration));
 
         try {
-            this.updateCandleVisual(1 - progress);
-            this.updateDisplay();
+            if (progress < 1) {
+                // update visuals for remaining percent
+                this.updateCandleVisual(1 - progress);
+                this.updateDisplay();
 
-            if (progress >= 1) {
-                this.complete();
+                // loop
+                this.animationFrame = requestAnimationFrame(this.animate);
             } else {
-                this.animationFrame = requestAnimationFrame(() => this.animate());
+                // reached end — stop rAF and finalize
+                this.running = false;
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                    this.animationFrame = null;
+                }
+
+                // ensure wax fully melted & display shows 00:00
+                this.updateCandleVisual(0);
+                this.updateDisplay();
+
+                // call complete to trigger flame out + message + audio stop
+                this.complete();
             }
         } catch (e) {
             console.error('CandleTimer.animate error', e);
-            // stop gracefully
             this.running = false;
             if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
             this.animationFrame = null;
@@ -277,19 +335,17 @@ export class CandleTimer {
         if (!this._candleOriginals) this._cacheCandleOriginals();
         const o = this._candleOriginals;
         if (!o) {
-            console.warn('CandleTimer: missing cached SVG originals, aborting visual update');
+            // can't update visuals without originals
             return;
         }
 
         const rect = document.querySelector('.candle-wax');
+        const flameGroup = document.querySelector('.candle-flame');
         const flameEllipses = o.flameEllipses || [];
         const wick = document.querySelector('.candle-wick');
         const glow = document.querySelector('.candle-glow');
 
-        if (!rect || !wick || !glow) {
-            console.warn('CandleTimer: essential SVG parts missing', { rect, wick, glow });
-            return;
-        }
+        if (!rect || !wick || !glow || !flameGroup) return;
 
         // shrink wax rect
         const minHeight = 6;
@@ -308,7 +364,7 @@ export class CandleTimer {
         let targetDy = desiredFlameBaseCy - o.flameEllipseCy1;
 
         // clamp targetDy to sensible range
-        const maxDy = Math.max(0, o.waxHeight - minHeight + 12);
+        const maxDy = Math.max(0, o.waxHeight - minHeight + 18);
         targetDy = Math.min(Math.max(targetDy, 0), maxDy);
 
         // smooth the movement (lerp)
@@ -316,10 +372,27 @@ export class CandleTimer {
         this._smoothState.flameDy = this._smoothState.flameDy + (targetDy - this._smoothState.flameDy) * alpha;
         const dy = this._smoothState.flameDy;
 
-        // apply to flame ellipses (absolute cy)
+        // slight flicker factor (time-based)
+        const t = Date.now() + this._flickerSeed;
+        const flicker = 1 + 0.03 * Math.sin(t / 120) + 0.015 * Math.sin(t / 40);
+
+        // apply to flame ellipses (absolute cy) — we keep individual ellipse cy for nicer shape
         try {
             if (flameEllipses[0]) flameEllipses[0].setAttribute('cy', o.flameEllipseCy1 + dy);
             if (flameEllipses[1]) flameEllipses[1].setAttribute('cy', o.flameEllipseCy2 + dy);
+            // scale rx/ry slightly for flicker
+            if (flameEllipses[0]) {
+                const baseRx = o.flameEllipseRx1 || parseFloat(flameEllipses[0].getAttribute('rx') || 12);
+                const baseRy = o.flameEllipseRy1 || parseFloat(flameEllipses[0].getAttribute('ry') || 20);
+                flameEllipses[0].setAttribute('rx', Math.max(6, baseRx * flicker));
+                flameEllipses[0].setAttribute('ry', Math.max(8, baseRy * flicker));
+            }
+            if (flameEllipses[1]) {
+                const baseRx2 = o.flameEllipseRx2 || parseFloat(flameEllipses[1].getAttribute('rx') || 8);
+                const baseRy2 = o.flameEllipseRy2 || parseFloat(flameEllipses[1].getAttribute('ry') || 12);
+                flameEllipses[1].setAttribute('rx', Math.max(4, baseRx2 * (0.98 + (flicker - 1) * 0.8)));
+                flameEllipses[1].setAttribute('ry', Math.max(6, baseRy2 * (0.98 + (flicker - 1) * 0.8)));
+            }
         } catch (e) {
             console.error('CandleTimer: failed updating flame ellipses', e);
         }
@@ -332,10 +405,20 @@ export class CandleTimer {
             console.error('CandleTimer: failed updating wick', e);
         }
 
-        // glow follows + fades
+        // glow follows + fades with remainingPercent
         try {
             glow.setAttribute('cy', o.glowCy + dy);
-            glow.style.opacity = Math.max(0, 0.6 * remainingPercent);
+            glow.style.opacity = String(Math.max(0, 0.6 * remainingPercent));
+        } catch (e) {
+            // ignore minor glow errors
+        }
+
+        // apply group transform for subtle vertical offset + random small horizontal jitter
+        try {
+            const jitterX = Math.sin(t / 150) * 0.6;
+            flameGroup.setAttribute('transform', `translate(${jitterX.toFixed(2)},${dy.toFixed(2)}) scale(${(1).toFixed(3)})`);
+            // fade the flame down soft when remainingPercent is low
+            flameGroup.style.opacity = String(Math.max(0, Math.min(1, remainingPercent * 1.2)));
         } catch (e) {
             // ignore
         }
@@ -358,8 +441,13 @@ export class CandleTimer {
             const waxHeight = parseFloat(rect.getAttribute('height'));
 
             const flameEllipses = Array.from(flameGroup.querySelectorAll('ellipse'));
+            // store original cx/cy/rx/ry to enable flicker/resets
             const flameEllipseCy1 = flameEllipses[0] ? parseFloat(flameEllipses[0].getAttribute('cy')) : 45;
             const flameEllipseCy2 = flameEllipses[1] ? parseFloat(flameEllipses[1].getAttribute('cy')) : (flameEllipseCy1 + 3);
+            const flameEllipseRx1 = flameEllipses[0] ? parseFloat(flameEllipses[0].getAttribute('rx')) : 12;
+            const flameEllipseRy1 = flameEllipses[0] ? parseFloat(flameEllipses[0].getAttribute('ry')) : 20;
+            const flameEllipseRx2 = flameEllipses[1] ? parseFloat(flameEllipses[1].getAttribute('rx')) : 8;
+            const flameEllipseRy2 = flameEllipses[1] ? parseFloat(flameEllipses[1].getAttribute('ry')) : 12;
 
             const wickY1 = parseFloat(wick.getAttribute('y1'));
             const wickY2 = parseFloat(wick.getAttribute('y2'));
@@ -370,6 +458,10 @@ export class CandleTimer {
                 waxHeight,
                 flameEllipseCy1,
                 flameEllipseCy2,
+                flameEllipseRx1,
+                flameEllipseRy1,
+                flameEllipseRx2,
+                flameEllipseRy2,
                 wickY1,
                 wickY2,
                 glowCy,
@@ -395,9 +487,16 @@ export class CandleTimer {
     }
 
     startDripAnimation() {
+        // ensure only one interval
         this.stopDripAnimation();
+        // create some initial delay so drips don't flood immediately
         this.dripInterval = setInterval(() => {
-            try { this.createDrip(); } catch(e){ console.error('createDrip error', e); }
+            try {
+                // only create drips if running and flame visible
+                if (this.running) this.createDrip();
+            } catch(e){
+                console.error('createDrip error', e);
+            }
         }, 400 + Math.random() * 600);
     }
 
@@ -406,6 +505,7 @@ export class CandleTimer {
             clearInterval(this.dripInterval);
             this.dripInterval = null;
         }
+        // remove all dynamic drips/buildups
         const dripsContainer = document.querySelector('.wax-drips');
         if (dripsContainer) dripsContainer.innerHTML = '';
         this.drips = [];
@@ -420,7 +520,7 @@ export class CandleTimer {
         const x = 30 + Math.random() * 40;
         const size = 1.5 + Math.random() * 1.5;
 
-        // temporary wax trail (small line) — these are short and will fall with animation; not static strips
+        // temporary wax trail (small line)
         const trailLength = 20 + Math.random() * 30;
         const trail = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         trail.setAttribute('x1', x); trail.setAttribute('y1', startY);
@@ -438,14 +538,14 @@ export class CandleTimer {
 
         let currentY = startY;
         const endY = 180;
-        let speed = 0.4;
-        const acceleration = 0.08;
+        let speed = 0.4 + Math.random() * 0.3;
+        const acceleration = 0.06 + Math.random() * 0.04;
         let opacity = 0.95;
 
         const animateDrip = () => {
             speed += acceleration;
             currentY += speed;
-            opacity -= 0.004;
+            opacity -= 0.004 + Math.random() * 0.002;
             drip.setAttribute('cy', currentY);
             drip.setAttribute('opacity', Math.max(0.35, opacity));
             const stretch = 1 + (speed * 0.15);
@@ -453,7 +553,7 @@ export class CandleTimer {
             if (currentY >= endY) {
                 this.createSplash(x, endY);
                 try { drip.remove(); } catch(e){}
-                try { trail.remove(); } catch(e){} // remove temporary trail when drip finishes
+                try { trail.remove(); } catch(e){}
             } else {
                 requestAnimationFrame(animateDrip);
             }
@@ -495,34 +595,41 @@ export class CandleTimer {
     }
 
     complete() {
-        this.running = false;
-        const startBtn = document.getElementById('start-btn');
-        const pauseBtn = document.getElementById('pause-btn');
-        if (startBtn) startBtn.disabled = true;
-        if (pauseBtn) pauseBtn.disabled = true;
+        // ensure audio & drips stopped
         if (window.audioManager) window.audioManager.stopLoopingSFX('candle-timer');
         this.stopDripAnimation();
+
+        // animate flame out
         this.animateFlameOut();
-        this.showCompletionMessage();
+
+        // show message after a short delay so flame fade feels natural
+        setTimeout(() => this.showCompletionMessage(), 700);
     }
 
     animateFlameOut() {
         const flame = document.querySelector('.candle-flame');
         if (flame) {
-            flame.style.transition = 'opacity 1s ease-out';
+            // directly set CSS transition so our RAF won't keep overwriting
+            flame.style.transition = 'opacity 900ms ease-out, transform 900ms ease-out';
             flame.style.opacity = '0';
+            // slight shrink transform for effect
+            flame.setAttribute('transform', 'translate(0,0) scale(0.8)');
         }
+        // then show smoke (SVG animate elements triggered)
         setTimeout(() => this.showSmoke(), 500);
     }
 
     showSmoke() {
         const smoke = document.querySelector('.candle-smoke');
         if (smoke) {
+            // make smoke visible and trigger SVG <animate> inside
             smoke.style.opacity = '1';
             const ellipse = smoke.querySelector('ellipse');
             if (ellipse) {
                 const animations = ellipse.querySelectorAll('animate');
-                animations.forEach(anim => { try { anim.beginElement(); } catch(e){} });
+                animations.forEach(anim => {
+                    try { anim.beginElement && anim.beginElement(); } catch(e){}
+                });
             }
         }
     }
