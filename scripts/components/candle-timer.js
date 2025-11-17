@@ -1,4 +1,4 @@
-// Nightfall Candle Timer Component - fixed: reset, flame-out, removed wax-strips
+// Nightfall Candle Timer Component - fixed: reset now restores full candle, flame-out works, no wax strips
 
 export class CandleTimer {
     constructor() {
@@ -15,7 +15,9 @@ export class CandleTimer {
         this._candleOriginals = null;
         this._smoothState = { flameDy: 0 };
 
-        // bind animate so cancelAnimationFrame works reliably
+        // NEW: Prevents recaching melted candle values
+        this._hasCachedOriginals = false;
+
         this.animate = this.animate.bind(this);
     }
 
@@ -40,14 +42,12 @@ export class CandleTimer {
         `;
 
         if (settings.theme === 'night') {
-            // small delay so DOM is stable, then attach listeners + cache originals
             setTimeout(() => {
                 try {
                     this.attachEventListeners();
-                    // cache after next paint so SVG is present
                     requestAnimationFrame(() => {
-                        this._cacheCandleOriginals(); // populate cache early
-                        this.updateCandleVisual(1.0); // ensure visuals match initial state
+                        this._cacheCandleOriginals();
+                        this.updateCandleVisual(1.0);
                         this.updateDisplay();
                     });
                 } catch (e) {
@@ -72,7 +72,6 @@ export class CandleTimer {
     }
 
     renderCandleTimer() {
-        // NOTE: Removed the static wax-buildup-permanent group (the long wax strips).
         return `
             <div class="card candle-timer-container">
                 <div class="candle-controls">
@@ -115,11 +114,6 @@ export class CandleTimer {
                                 <stop offset="60%" style="stop-color:#ff9933;stop-opacity:0.2" />
                                 <stop offset="100%" style="stop-color:#ff6600;stop-opacity:0" />
                             </radialGradient>
-                            <radialGradient id="waxPoolGradient" cx="50%" cy="50%">
-                                <stop offset="0%" style="stop-color:#f5f5f5;stop-opacity:0.9" />
-                                <stop offset="50%" style="stop-color:#e8e8e8;stop-opacity:0.8" />
-                                <stop offset="100%" style="stop-color:#d4d4d4;stop-opacity:0.7" />
-                            </radialGradient>
                         </defs>
                         
                         <ellipse class="candle-glow" cx="50" cy="50" rx="45" ry="60" fill="url(#candleGlow)" opacity="0.6"/>
@@ -141,7 +135,6 @@ export class CandleTimer {
                         <g class="candle-wax-container">
                             <rect class="candle-wax" x="30" y="65" width="40" height="115" fill="url(#waxGradient)" rx="2"/>
                             
-                            <!-- Wax drips container (dynamic drops only) -->
                             <g class="wax-drips"></g>
                         </g>
                         
@@ -159,7 +152,6 @@ export class CandleTimer {
         try {
             const durationBtns = document.querySelectorAll('.duration-btn');
             durationBtns.forEach(btn => {
-                // use btn.dataset to avoid e.target issues when inner elements exist
                 btn.addEventListener('click', () => {
                     const minutes = parseFloat(btn.dataset.duration);
                     this.setDuration(minutes);
@@ -168,13 +160,9 @@ export class CandleTimer {
                 });
             });
 
-            const startBtn = document.getElementById('start-btn');
-            const pauseBtn = document.getElementById('pause-btn');
-            const resetBtn = document.getElementById('reset-btn');
-
-            if (startBtn) startBtn.addEventListener('click', () => this.start());
-            if (pauseBtn) pauseBtn.addEventListener('click', () => this.pause());
-            if (resetBtn) resetBtn.addEventListener('click', () => this.reset());
+            document.getElementById('start-btn')?.addEventListener('click', () => this.start());
+            document.getElementById('pause-btn')?.addEventListener('click', () => this.pause());
+            document.getElementById('reset-btn')?.addEventListener('click', () => this.reset());
         } catch (e) {
             console.error('CandleTimer.attachEventListeners error', e);
         }
@@ -189,15 +177,12 @@ export class CandleTimer {
         }
         this.elapsed = 0;
         this.updateDisplay();
+
+        const msg = document.querySelector('.completion-message');
+        if (msg) { msg.classList.remove('visible'); msg.textContent = ''; }
+
         const startBtn = document.getElementById('start-btn');
         if (startBtn) startBtn.disabled = this.duration === 0;
-
-        // clear completion message if user sets new duration
-        const msg = document.querySelector('.completion-message');
-        if (msg) {
-            msg.classList.remove('visible');
-            msg.textContent = '';
-        }
     }
 
     start() {
@@ -205,19 +190,13 @@ export class CandleTimer {
         this.running = true;
         this.startTime = Date.now() - this.elapsed;
 
-        const startBtn = document.getElementById('start-btn');
-        const pauseBtn = document.getElementById('pause-btn');
-        if (startBtn) startBtn.disabled = true;
-        if (pauseBtn) pauseBtn.disabled = false;
+        document.getElementById('start-btn').disabled = true;
+        document.getElementById('pause-btn').disabled = false;
 
         if (window.audioManager) window.audioManager.playLoopingSFX('candle-timer');
 
         this.startDripAnimation();
-
-        // start RAF-driven loop
-        if (!this.animationFrame) {
-            this.animationFrame = requestAnimationFrame(this.animate);
-        }
+        if (!this.animationFrame) this.animationFrame = requestAnimationFrame(this.animate);
     }
 
     pause() {
@@ -225,224 +204,143 @@ export class CandleTimer {
         this.running = false;
         this.elapsed = Date.now() - this.startTime;
 
-        const startBtn = document.getElementById('start-btn');
-        const pauseBtn = document.getElementById('pause-btn');
-        if (startBtn) startBtn.disabled = false;
-        if (pauseBtn) pauseBtn.disabled = true;
+        document.getElementById('start-btn').disabled = false;
+        document.getElementById('pause-btn').disabled = true;
 
         if (window.audioManager) window.audioManager.stopLoopingSFX('candle-timer');
 
         this.stopDripAnimation();
-        if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
+        cancelAnimationFrame(this.animationFrame);
         this.animationFrame = null;
     }
 
     reset() {
-        // stop everything first
         this.running = false;
         this.elapsed = 0;
         this.startTime = null;
 
-        const startBtn = document.getElementById('start-btn');
-        const pauseBtn = document.getElementById('pause-btn');
-        if (startBtn) startBtn.disabled = this.duration === 0;
-        if (pauseBtn) pauseBtn.disabled = true;
+        document.getElementById('start-btn').disabled = this.duration === 0;
+        document.getElementById('pause-btn').disabled = true;
 
         if (window.audioManager) window.audioManager.stopLoopingSFX('candle-timer');
 
         this.stopDripAnimation();
-        if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
+        cancelAnimationFrame(this.animationFrame);
         this.animationFrame = null;
 
-        // restore visuals after paint so DOM is stable
         requestAnimationFrame(() => {
-            try {
-                // remove all dynamic drips/buildups
-                const dripsContainer = document.querySelector('.wax-drips');
-                if (dripsContainer) dripsContainer.innerHTML = '';
+            const dripsContainer = document.querySelector('.wax-drips');
+            if (dripsContainer) dripsContainer.innerHTML = '';
 
-                // reset caches so visuals return to original state
-                this._candleOriginals = null;
-                this._smoothState = { flameDy: 0 };
-                this._cacheCandleOriginals();
-                this.updateCandleVisual(1.0);
+            // USE ORIGINAL VALUES (we never overwrite them)
+            this._smoothState = { flameDy: 0 };
+            this.updateCandleVisual(1.0);  // restores original wax height
 
-                const msg = document.querySelector('.completion-message');
-                if (msg) msg.classList.remove('visible');
+            const flame = document.querySelector('.candle-flame');
+            if (flame) { flame.style.transition = ''; flame.style.opacity = '1'; flame.setAttribute('transform',''); }
 
-                const flame = document.querySelector('.candle-flame');
-                if (flame) {
-                    flame.style.transition = '';
-                    flame.style.opacity = '1';
-                    flame.setAttribute('transform', '');
-                }
-                const smoke = document.querySelector('.candle-smoke');
-                if (smoke) smoke.style.opacity = '0';
+            const smoke = document.querySelector('.candle-smoke');
+            if (smoke) smoke.style.opacity = '0';
 
-                // ensure timer display shows selected duration (or 00:00 if none)
-                this.updateDisplay();
-            } catch (e) {
-                console.error('CandleTimer.reset error', e);
-            }
+            const msg = document.querySelector('.completion-message');
+            if (msg) msg.classList.remove('visible');
+
+            this.updateDisplay();
         });
     }
 
     animate() {
-        // stop if not running
         if (!this.running) {
-            if (this.animationFrame) {
-                cancelAnimationFrame(this.animationFrame);
-                this.animationFrame = null;
-            }
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
             return;
         }
 
         this.elapsed = Date.now() - this.startTime;
-        const progress = Math.min(1, this.elapsed / Math.max(1, this.duration));
+        const progress = Math.min(1, this.elapsed / this.duration);
 
-        try {
-            if (progress < 1) {
-                this.updateCandleVisual(1 - progress);
-                this.updateDisplay();
-                this.animationFrame = requestAnimationFrame(this.animate);
-            } else {
-                // finalize: stop RAF, set visuals to 0, then complete
-                this.running = false;
-                if (this.animationFrame) {
-                    cancelAnimationFrame(this.animationFrame);
-                    this.animationFrame = null;
-                }
-                this.elapsed = this.duration;
-                this.updateCandleVisual(0);
-                this.updateDisplay();
-
-                // ensure audio/stops & drips stop inside complete
-                this.complete();
-            }
-        } catch (e) {
-            console.error('CandleTimer.animate error', e);
+        if (progress < 1) {
+            this.updateCandleVisual(1 - progress);
+            this.updateDisplay();
+            this.animationFrame = requestAnimationFrame(this.animate);
+        } else {
             this.running = false;
-            if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
+            cancelAnimationFrame(this.animationFrame);
             this.animationFrame = null;
+
+            this.updateCandleVisual(0);
+            this.updateDisplay();
+            this.complete();
         }
     }
 
     updateCandleVisual(remainingPercent) {
-        // defensive: cache originals if needed
-        if (!this._candleOriginals) this._cacheCandleOriginals();
+        if (!this._candleOriginals) return;
         const o = this._candleOriginals;
-        if (!o) {
-            // can't update visuals without originals
-            return;
-        }
 
         const rect = document.querySelector('.candle-wax');
+        const flameGroup = document.querySelector('.candle-flame');
         const flameEllipses = o.flameEllipses || [];
         const wick = document.querySelector('.candle-wick');
         const glow = document.querySelector('.candle-glow');
-        const flameGroup = document.querySelector('.candle-flame');
 
         if (!rect || !wick || !glow || !flameGroup) return;
 
-        // shrink wax rect
         const minHeight = 6;
         const newHeight = Math.max(minHeight, Math.round(o.waxHeight * remainingPercent));
         const newY = o.waxY + (o.waxHeight - newHeight);
-        try {
-            rect.setAttribute('y', newY);
-            rect.setAttribute('height', newHeight);
-        } catch (e) {
-            console.error('CandleTimer: failed to set wax rect attributes', e);
-        }
 
-        // flame desired position (above wax)
-        const flameOffsetAboveWax = 10; // tuned default
+        rect.setAttribute('y', newY);
+        rect.setAttribute('height', newHeight);
+
+        // flame up movement
+        const flameOffsetAboveWax = 10;
         const desiredFlameBaseCy = newY - flameOffsetAboveWax;
-        let targetDy = desiredFlameBaseCy - o.flameEllipseCy1;
+        const targetDy = Math.min(Math.max(desiredFlameBaseCy - o.flameEllipseCy1, 0), o.waxHeight - minHeight + 12);
 
-        // clamp targetDy to sensible range
-        const maxDy = Math.max(0, o.waxHeight - minHeight + 12);
-        targetDy = Math.min(Math.max(targetDy, 0), maxDy);
-
-        // smooth the movement (lerp)
         const alpha = 0.18;
-        this._smoothState.flameDy = this._smoothState.flameDy + (targetDy - this._smoothState.flameDy) * alpha;
+        this._smoothState.flameDy += (targetDy - this._smoothState.flameDy) * alpha;
         const dy = this._smoothState.flameDy;
 
-        // apply to flame ellipses (absolute cy)
-        try {
-            if (flameEllipses[0]) flameEllipses[0].setAttribute('cy', o.flameEllipseCy1 + dy);
-            if (flameEllipses[1]) flameEllipses[1].setAttribute('cy', o.flameEllipseCy2 + dy);
-        } catch (e) {
-            console.error('CandleTimer: failed updating flame ellipses', e);
-        }
+        // update flame ellipses
+        if (flameEllipses[0]) flameEllipses[0].setAttribute('cy', o.flameEllipseCy1 + dy);
+        if (flameEllipses[1]) flameEllipses[1].setAttribute('cy', o.flameEllipseCy2 + dy);
 
-        // wick moves with flame
-        try {
-            wick.setAttribute('y1', o.wickY1 + dy);
-            wick.setAttribute('y2', o.wickY2 + dy);
-        } catch (e) {
-            console.error('CandleTimer: failed updating wick', e);
-        }
+        wick.setAttribute('y1', o.wickY1 + dy);
+        wick.setAttribute('y2', o.wickY2 + dy);
 
-        // glow follows + fades
-        try {
-            glow.setAttribute('cy', o.glowCy + dy);
-            glow.style.opacity = Math.max(0, 0.6 * remainingPercent);
-        } catch (e) {
-            // ignore
-        }
+        glow.setAttribute('cy', o.glowCy + dy);
+        glow.style.opacity = Math.max(0, 0.6 * remainingPercent);
 
-        // slight transform for subtle movement
-        try {
-            flameGroup.setAttribute('transform', `translate(0,${dy.toFixed(2)})`);
-            flameGroup.style.opacity = String(Math.max(0, Math.min(1, remainingPercent * 1.1)));
-        } catch (e) {
-            // ignore
-        }
+        flameGroup.setAttribute('transform', `translate(0,${dy.toFixed(2)})`);
+        flameGroup.style.opacity = `${Math.max(0, Math.min(1, remainingPercent * 1.1))}`;
     }
 
+    // NEW — caches original values ONLY ONCE
     _cacheCandleOriginals() {
-        try {
-            const rect = document.querySelector('.candle-wax');
-            const flameGroup = document.querySelector('.candle-flame');
-            const wick = document.querySelector('.candle-wick');
-            const glow = document.querySelector('.candle-glow');
+        if (this._hasCachedOriginals) return; // ← prevents recaching melted values
 
-            if (!rect || !flameGroup || !wick || !glow) {
-                console.warn('CandleTimer._cacheCandleOriginals: missing some SVG elements', { rect, flameGroup, wick, glow });
-                this._candleOriginals = null;
-                return;
-            }
+        const rect = document.querySelector('.candle-wax');
+        const flameGroup = document.querySelector('.candle-flame');
+        const wick = document.querySelector('.candle-wick');
+        const glow = document.querySelector('.candle-glow');
 
-            const waxY = parseFloat(rect.getAttribute('y'));
-            const waxHeight = parseFloat(rect.getAttribute('height'));
+        if (!rect || !flameGroup || !wick || !glow) return;
 
-            const flameEllipses = Array.from(flameGroup.querySelectorAll('ellipse'));
-            const flameEllipseCy1 = flameEllipses[0] ? parseFloat(flameEllipses[0].getAttribute('cy')) : 45;
-            const flameEllipseCy2 = flameEllipses[1] ? parseFloat(flameEllipses[1].getAttribute('cy')) : (flameEllipseCy1 + 3);
+        const flameEllipses = Array.from(flameGroup.querySelectorAll('ellipse'));
 
-            const wickY1 = parseFloat(wick.getAttribute('y1'));
-            const wickY2 = parseFloat(wick.getAttribute('y2'));
-            const glowCy = parseFloat(glow.getAttribute('cy'));
+        this._candleOriginals = {
+            waxY: parseFloat(rect.getAttribute('y')),
+            waxHeight: parseFloat(rect.getAttribute('height')),
+            flameEllipseCy1: parseFloat(flameEllipses[0].getAttribute('cy')),
+            flameEllipseCy2: parseFloat(flameEllipses[1].getAttribute('cy')),
+            wickY1: parseFloat(wick.getAttribute('y1')),
+            wickY2: parseFloat(wick.getAttribute('y2')),
+            glowCy: parseFloat(glow.getAttribute('cy')),
+            flameEllipses
+        };
 
-            this._candleOriginals = {
-                waxY,
-                waxHeight,
-                flameEllipseCy1,
-                flameEllipseCy2,
-                wickY1,
-                wickY2,
-                glowCy,
-                flameEllipses
-            };
-
-            // reset smoothing to exact starting position
-            this._smoothState = { flameDy: 0 };
-        } catch (e) {
-            console.error('CandleTimer._cacheCandleOriginals error', e);
-            this._candleOriginals = null;
-        }
+        this._hasCachedOriginals = true; // 🔥 prevents overwriting originals
     }
 
     updateDisplay() {
@@ -451,29 +349,22 @@ export class CandleTimer {
         const seconds = Math.floor((remaining % 60000) / 1000);
         const display = document.querySelector('.time-remaining');
         if (display) {
-            // fixed syntax (was a broken template previously)
-            display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            display.textContent = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
         }
     }
 
     startDripAnimation() {
         this.stopDripAnimation();
         this.dripInterval = setInterval(() => {
-            try { 
-                // only create drips while running and while flame visible
-                if (this.running) this.createDrip();
-            } catch(e){ console.error('createDrip error', e); }
+            if (this.running) this.createDrip();
         }, 400 + Math.random() * 600);
     }
 
     stopDripAnimation() {
-        if (this.dripInterval) {
-            clearInterval(this.dripInterval);
-            this.dripInterval = null;
-        }
+        if (this.dripInterval) clearInterval(this.dripInterval);
+        this.dripInterval = null;
         const dripsContainer = document.querySelector('.wax-drips');
         if (dripsContainer) dripsContainer.innerHTML = '';
-        this.drips = [];
     }
 
     createDrip() {
@@ -485,32 +376,32 @@ export class CandleTimer {
         const x = 30 + Math.random() * 40;
         const size = 1.5 + Math.random() * 1.5;
 
-        // **REMOVED** the long wax trail/stripe - user requested no stripes.
-        // Only create a single drip ellipse that falls, then create a splash/buildup.
-
         const drip = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
-        drip.setAttribute('cx', x); drip.setAttribute('cy', startY);
-        drip.setAttribute('rx', (size * 0.8).toString()); drip.setAttribute('ry', (size * 1.5).toString());
-        drip.setAttribute('fill', '#cc8844'); drip.setAttribute('opacity', '0.95'); drip.classList.add('wax-drip');
+        drip.setAttribute('cx', x);
+        drip.setAttribute('cy', startY);
+        drip.setAttribute('rx', size * 0.8);
+        drip.setAttribute('ry', size * 1.5);
+        drip.setAttribute('fill', '#cc8844');
+        drip.setAttribute('opacity', '0.95');
         dripsContainer.appendChild(drip);
 
         let currentY = startY;
         const endY = 180;
         let speed = 0.4 + Math.random() * 0.3;
-        const acceleration = 0.06 + Math.random() * 0.04;
         let opacity = 0.95;
 
         const animateDrip = () => {
-            speed += acceleration;
+            speed += 0.06;
             currentY += speed;
-            opacity -= 0.004 + Math.random() * 0.002;
+            opacity -= 0.004;
+
             drip.setAttribute('cy', currentY);
             drip.setAttribute('opacity', Math.max(0.35, opacity));
-            const stretch = 1 + (speed * 0.15);
-            drip.setAttribute('ry', (size * 1.5 * stretch).toString());
+            drip.setAttribute('ry', size * 1.5 * (1 + speed * 0.15));
+
             if (currentY >= endY) {
                 this.createSplash(x, endY);
-                try { drip.remove(); } catch(e){}
+                drip.remove();
             } else {
                 requestAnimationFrame(animateDrip);
             }
@@ -521,30 +412,37 @@ export class CandleTimer {
     createSplash(x, y) {
         const dripsContainer = document.querySelector('.wax-drips');
         if (!dripsContainer) return;
+
         const buildup = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
-        buildup.setAttribute('cx', x); buildup.setAttribute('cy', y);
-        buildup.setAttribute('rx', (3 + Math.random() * 3).toString()); buildup.setAttribute('ry', (1.5 + Math.random() * 1.5).toString());
-        buildup.setAttribute('fill', '#d4a574'); buildup.setAttribute('opacity', '0.8'); buildup.classList.add('wax-buildup');
+        buildup.setAttribute('cx', x);
+        buildup.setAttribute('cy', y);
+        buildup.setAttribute('rx', 3 + Math.random() * 3);
+        buildup.setAttribute('ry', 1.5 + Math.random() * 1.5);
+        buildup.setAttribute('fill', '#d4a574');
+        buildup.setAttribute('opacity', '0.8');
         dripsContainer.appendChild(buildup);
 
         for (let i=0;i<5;i++){
             const particle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             const angle = (Math.random() - 0.5) * Math.PI;
             const distance = 3 + Math.random() * 4;
-            particle.setAttribute('cx', x); particle.setAttribute('cy', y); particle.setAttribute('r','1');
-            particle.setAttribute('fill','#cc8844'); particle.setAttribute('opacity','0.7');
+
+            particle.setAttribute('cx', x);
+            particle.setAttribute('cy', y);
+            particle.setAttribute('r', '1');
+            particle.setAttribute('fill', '#cc8844');
+            particle.setAttribute('opacity', '0.7');
             dripsContainer.appendChild(particle);
 
-            let time = 0;
+            let t = 0;
             const animateSplash = () => {
-                time += 0.1;
-                const newX = x + Math.cos(angle) * distance * time;
-                const newY = y + Math.sin(angle) * distance * time * 0.5;
-                const opacity = Math.max(0, 0.7 - time * 0.3);
-                particle.setAttribute('cx', newX);
-                particle.setAttribute('cy', newY);
-                particle.setAttribute('opacity', opacity);
-                if (opacity <= 0) particle.remove();
+                t += 0.1;
+                particle.setAttribute('cx', x + Math.cos(angle) * distance * t);
+                particle.setAttribute('cy', y + Math.sin(angle) * distance * t * 0.5);
+                const newOpacity = Math.max(0, 0.7 - t * 0.3);
+                particle.setAttribute('opacity', newOpacity);
+
+                if (newOpacity <= 0) particle.remove();
                 else requestAnimationFrame(animateSplash);
             };
             animateSplash();
@@ -552,21 +450,15 @@ export class CandleTimer {
     }
 
     complete() {
-        // stop audio & drips already (defensive)
         if (window.audioManager) window.audioManager.stopLoopingSFX('candle-timer');
         this.stopDripAnimation();
-
-        // animate flame-out and show smoke & message
         this.animateFlameOut();
-
-        // short delay so flame fade looks natural
         setTimeout(() => this.showCompletionMessage(), 700);
     }
 
     animateFlameOut() {
         const flame = document.querySelector('.candle-flame');
         if (flame) {
-            // use CSS transition for a reliable fade (RAF won't override after we cancel)
             flame.style.transition = 'opacity 900ms ease-out, transform 900ms ease-out';
             flame.style.opacity = '0';
             flame.setAttribute('transform', 'translate(0,0) scale(0.95)');
@@ -578,11 +470,7 @@ export class CandleTimer {
         const smoke = document.querySelector('.candle-smoke');
         if (smoke) {
             smoke.style.opacity = '1';
-            const ellipse = smoke.querySelector('ellipse');
-            if (ellipse) {
-                const animations = ellipse.querySelectorAll('animate');
-                animations.forEach(anim => { try { anim.beginElement(); } catch(e){} });
-            }
+            smoke.querySelectorAll('animate').forEach(a => { try { a.beginElement(); } catch(e){} });
         }
     }
 
@@ -593,18 +481,18 @@ export class CandleTimer {
             "The candle's watch has ended.",
             "Time melted away with the wax."
         ];
-        const message = messages[Math.floor(Math.random() * messages.length)];
         const messageEl = document.querySelector('.completion-message');
         if (messageEl) {
-            messageEl.textContent = message;
+            messageEl.textContent = messages[Math.floor(Math.random() * messages.length)];
             messageEl.classList.add('visible');
         }
     }
 
     destroy() {
-        if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
+        cancelAnimationFrame(this.animationFrame);
         this.stopDripAnimation();
         this._candleOriginals = null;
         this._smoothState = { flameDy: 0 };
+        this._hasCachedOriginals = false;
     }
 }
