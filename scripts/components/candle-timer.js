@@ -344,12 +344,13 @@ export class CandleTimer {
     }
 
     updateDisplay() {
-    const remaining = Math.max(0, this.duration - this.elapsed);
-    const minutes = Math.floor(remaining / 60000);
-    const seconds = Math.floor((remaining % 60000) / 1000);
-    const display = document.querySelector('.time-remaining');
-    if (display) {
-        display.textContent = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+        const remaining = Math.max(0, this.duration - this.elapsed);
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        const display = document.querySelector('.time-remaining');
+        if (display) {
+            display.textContent = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+        }
     }
 
     startDripAnimation() {
@@ -448,22 +449,11 @@ export class CandleTimer {
         }
     }
 
-complete() {
-    if (window.audioManager) window.audioManager.stopLoopingSFX('candle-timer');
-    this.stopDripAnimation();
-
-    this.animateFlameOut();  // flame fade animation
-
-    // 🔥 HARD-SET flame invisible to ensure extinguish always works
-    const flame = document.querySelector('.candle-flame');
-    if (flame) {
-        flame.style.opacity = '0';
-        flame.setAttribute('transform', 'translate(0,0) scale(0.9)');
-    }
-
-    setTimeout(() => this.showCompletionMessage(), 700);
-}
-
+    complete() {
+        if (window.audioManager) window.audioManager.stopLoopingSFX('candle-timer');
+        this.stopDripAnimation();
+        this.animateFlameOut();
+        setTimeout(() => this.showCompletionMessage(), 700);
     }
 
     animateFlameOut() {
