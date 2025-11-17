@@ -46,64 +46,62 @@ export class HomePage {
     }
 
 showWelcomeModal() {
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+    // If we've already shown the welcome modal during this page lifetime, skip.
+    // This in-memory flag resets on full page reload / new tab (exactly what we want).
+    if (window.__welcomeShownDuringThisLoad) return;
 
-    // Show ONLY if:
-    // - user has NOT seen it before
-    // - AND this is a REAL page reload, not SPA routing
-    if (!hasSeenWelcome && performance.navigation.type === performance.navigation.TYPE_RELOAD) {
+    // Mark it shown so subsequent SPA navigation/renders won't show it again
+    window.__welcomeShownDuringThisLoad = true;
 
-        const modal = document.createElement('div');
-        modal.className = 'welcome-modal';
-        modal.innerHTML = `
-            <div class="welcome-content">
-                <div class="welcome-sparkles">
-                    <div class="sparkle-dot"></div>
-                    <div class="sparkle-dot"></div>
-                    <div class="sparkle-dot"></div>
-                    <div class="sparkle-dot"></div>
-                    <div class="sparkle-dot"></div>
-                </div>
-                <h1 class="welcome-title">The Spectral Haven</h1>
-                <p class="welcome-subtitle">
+    // The original modal creation code (unchanged visually / behaviorally)
+    const modal = document.createElement('div');
+    modal.className = 'welcome-modal';
+    modal.innerHTML = `
+        <div class="welcome-content">
+            <div class="welcome-sparkles">
+                <div class="sparkle-dot"></div>
+                <div class="sparkle-dot"></div>
+                <div class="sparkle-dot"></div>
+                <div class="sparkle-dot"></div>
+                <div class="sparkle-dot"></div>
+            </div>
+            <h1 class="welcome-title">The Spectral Haven</h1>
+            <p class="welcome-subtitle">
 Welcome, traveler. The Grove awakens with every step you take. 
 The Spectral Haven is a cozy little creation — stitched from strange tools, 
 whispering components, and reanimated ideas powered by Kiro’s enchanting code. 
 It’s a haunted workshop filled with glowing orbs, Whisper Well, and playful effects crafted for you. 
 Enjoy this Haunted Journey!!!
-                </p>
-                <button class="welcome-close" id="welcome-close">
-                    ✨ Enter The Haven ✨
-                </button>
-            </div>
-        `;
+            </p>
+            <button class="welcome-close" id="welcome-close">
+                ✨ Enter The Haven ✨
+            </button>
+        </div>
+    `;
 
-        document.body.appendChild(modal);
+    document.body.appendChild(modal);
 
-        const closeBtn = document.getElementById('welcome-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                modal.style.animation = 'modalFadeIn 0.3s ease-out reverse';
-                setTimeout(() => {
-                    modal.remove();
-                    localStorage.setItem('hasSeenWelcome', 'true');
-                }, 300);
-            });
-        }
-
-        if (window.audioManager) {
-            setTimeout(() => window.audioManager.playSFX('shimmer'), 200);
-        }
+    // Close modal on button click
+    const closeBtn = document.getElementById('welcome-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.style.animation = 'modalFadeIn 0.3s ease-out reverse';
+            setTimeout(() => {
+                modal.remove();
+                // NOTE: do not set a persistent localStorage flag here — we intentionally
+                // keep this in-memory so the modal will appear again on a full reload.
+            }, 300);
+        });
     }
-}
 
-    // Play shimmer sound (AudioManager)
+    // Play shimmer sound when modal appears (keeps your audio call intact)
     if (window.audioManager && typeof window.audioManager.playSFX === 'function') {
         setTimeout(() => {
             window.audioManager.playSFX('shimmer');
         }, 200);
     }
 }
+
 
     playIntro() {
         // Play intro when homepage loads (after audio context is enabled)
