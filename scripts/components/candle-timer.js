@@ -331,70 +331,56 @@ export class CandleTimer {
         }
     }
 
-updateCandleVisual(remainingPercent) {
-    // Ensure cached original positions
-    if (!this._candleOriginals) this._cacheCandleOriginals();
-    const o = this._candleOriginals;
-    if (!o) return;
+    // --- Updated: move flame by altering ellipse cy attrs and wick coords ---
+    updateCandleVisual(remainingPercent) {
+        // Ensure cached original positions
+        if (!this._candleOriginals) this._cacheCandleOriginals();
 
-    const rect = document.querySelector('.candle-wax');
-    const flameEllipses = o.flameEllipses || [];
-    const wick = document.querySelector('.candle-wick');
-    const glow = document.querySelector('.candle-glow');
-    const waxBuildup = document.querySelector('.wax-buildup-permanent'); // group to move
+        const o = this._candleOriginals;
+        if (!o) return;
 
-    if (!rect || !wick || !glow) return;
+        const rect = document.querySelector('.candle-wax');
+        const flameEllipses = o.flameEllipses || [];
+        const wick = document.querySelector('.candle-wick');
+        const glow = document.querySelector('.candle-glow');
 
-    // Compute new wax rect (attribute-based)
-    const minHeight = 8; // don't shrink below this to keep visuals intact
-    const newHeight = Math.max(minHeight, Math.round(o.waxHeight * remainingPercent));
-    const newY = o.waxY + (o.waxHeight - newHeight);
-    rect.setAttribute('y', newY);
-    rect.setAttribute('height', newHeight);
+        if (!rect || !wick || !glow) return;
 
-    // Move the wax buildup group down with the wax so trails/pools follow
-    if (waxBuildup) {
-        const dyWax = (o.waxHeight - newHeight); // amount the wax top moved downward
-        // Translate the wax-buildup slightly less than full dy to keep it visually attached
-        waxBuildup.setAttribute('transform', `translate(0, ${dyWax * 0.98})`);
-        // Optionally fade buildup a little as candle nears end:
-        const fade = Math.max(0.25, remainingPercent); // don't vanish completely
-        waxBuildup.style.opacity = fade;
+        // Compute new wax rect
+        const minHeight = 6;
+        const newHeight = Math.max(minHeight, Math.round(o.waxHeight * remainingPercent));
+        const newY = o.waxY + (o.waxHeight - newHeight);
+
+        rect.setAttribute('y', newY);
+        rect.setAttribute('height', newHeight);
+
+        // Position flame: base a few px above the wax top
+        const flameOffsetAboveWax = 8; // px gap between wax top and flame base
+        const desiredFlameBaseCy = newY - flameOffsetAboveWax;
+
+        // Compute dy relative to original flame ellipse positions
+        const dy1 = desiredFlameBaseCy - o.flameEllipseCy1;
+        const dy2 = desiredFlameBaseCy - o.flameEllipseCy2;
+
+        // Update each flame ellipse absolute cy (use cached element refs if available)
+        if (flameEllipses[0]) {
+            flameEllipses[0].setAttribute('cy', o.flameEllipseCy1 + dy1);
+        }
+        if (flameEllipses[1]) {
+            flameEllipses[1].setAttribute('cy', o.flameEllipseCy2 + dy2);
+        }
+
+        // Update wick coordinates by same dy (use dy1 as primary)
+        wick.setAttribute('y1', o.wickY1 + dy1);
+        wick.setAttribute('y2', o.wickY2 + dy1);
+
+        // Move glow ellipse vertically and fade it with remainingPercent
+        glow.setAttribute('cy', o.glowCy + dy1);
+        const glowOpacity = Math.max(0, 0.6 * remainingPercent);
+        glow.style.opacity = glowOpacity;
+
+        // Also adjust drips' startY implicitly (createDrip reads rect.y)
     }
-
-    // Desired flame base position a few px above wax top
-    const flameOffsetAboveWax = 12; // larger gap so flame stays above wax comfortably
-    const desiredFlameBaseCy = newY - flameOffsetAboveWax;
-
-    // Compute primary dy relative to original positions
-    let targetDy = desiredFlameBaseCy - o.flameEllipseCy1;
-
-    // Clamp the maximum downward movement so flame never drops unrealistically
-    const maxDy = Math.max(0, o.waxHeight - minHeight + 10); // allow some buffer
-    targetDy = Math.min(Math.max(targetDy, 0), maxDy);
-
-    // Smooth toward targetDy (simple lerp)
-    if (!this._smoothState) this._smoothState = { flameDy: targetDy };
-    const alpha = 0.16; // smoothing factor (lower = smoother/slower)
-    this._smoothState.flameDy = this._smoothState.flameDy + (targetDy - this._smoothState.flameDy) * alpha;
-    const dy = this._smoothState.flameDy;
-
-    // Apply to flame ellipses (preserve shape by using their original cy plus dy offset)
-    if (flameEllipses[0]) flameEllipses[0].setAttribute('cy', o.flameEllipseCy1 + dy);
-    if (flameEllipses[1]) flameEllipses[1].setAttribute('cy', o.flameEllipseCy2 + dy);
-
-    // Apply to wick (move both y1/y2 by same dy)
-    wick.setAttribute('y1', o.wickY1 + dy);
-    wick.setAttribute('y2', o.wickY2 + dy);
-
-    // Glow follows and fades
-    glow.setAttribute('cy', o.glowCy + dy);
-    const glowOpacity = Math.max(0, 0.6 * remainingPercent);
-    glow.style.opacity = glowOpacity;
-
-    // Note: createDrip() reads rect.y for its start position, so new drips will originate
-    // from the current wax top automatically.
-}
 
     // Cache initial positions and dimensions from SVG so all updates are relative
     _cacheCandleOriginals() {
@@ -442,7 +428,7 @@ updateCandleVisual(remainingPercent) {
         
         const display = document.querySelector('.time-remaining');
         if (display) {
-            display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            display.textContent = ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')};
         }
     }
 
