@@ -46,48 +46,134 @@ export class HomePage {
     }
 
 showWelcomeModal() {
-    // ALWAYS show the welcome modal on page load
-    const modal = document.createElement('div');
-    modal.className = 'welcome-modal';
-    modal.innerHTML = `
-        <div class="welcome-content">
-            <div class="welcome-sparkles">
-                <div class="sparkle-dot"></div>
-                <div class="sparkle-dot"></div>
-                <div class="sparkle-dot"></div>
-                <div class="sparkle-dot"></div>
-                <div class="sparkle-dot"></div>
-            </div>
-            <h1 class="welcome-title">The Spectral Haven</h1>
-            <p class="welcome-subtitle">
-                Welcome, traveler. The Grove awakens with every step you take. 
-                        The Spectral Haven is a cozy little creation — stitched from strange tools, 
-                        whispering components, and reanimated ideas powered by Kiro’s enchanting code. 
-                        It’s a haunted workshop filled with glowing orbs, Whisper Well, and playful effects crafted for you. 
-                        Enjoy this Haunted Journey!!!
-            </p>
-            <button class="welcome-close" id="welcome-close">
-                ✨ Enter The Haven ✨
-            </button>
-        </div>
-    `;
+    // Detect a full page load (NOT SPA navigation)
+    const navEntries = performance.getEntriesByType && performance.getEntriesByType("navigation");
+    const navType = (navEntries && navEntries[0] && navEntries[0].type) || (performance.navigation && performance.navigation.type);
+    const isFullReload = (navType === 'reload' || navType === 'navigate' || navType === 0);
 
-    // Remove any previous version (safety)
+    // If not a full reload / fresh open, do nothing
+    if (!isFullReload) return;
+
+    // Ensure only one modal exists
     const existing = document.querySelector('.welcome-modal');
     if (existing) existing.remove();
 
-    document.body.appendChild(modal);
+    // Build overlay (subtle dim)
+    const overlay = document.createElement('div');
+    overlay.className = 'welcome-modal';
+    overlay.style.cssText = `
+        position:fixed;
+        inset:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background: rgba(6,6,10,0.45); /* subtle dim */
+        z-index:10000;
+        pointer-events:auto;
+        animation: modalFadeIn .22s ease-out;
+    `;
 
-    // Close button logic
-    const closeBtn = document.getElementById('welcome-close');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.style.animation = 'modalFadeIn 0.3s ease-out reverse';
-            setTimeout(() => {
-                modal.remove();
-            }, 300);
-        });
-    }
+    // Build dialog card (small and non-blocking)
+    const card = document.createElement('div');
+    card.className = 'welcome-card';
+    card.style.cssText = `
+        width: min(760px, 92%);
+        max-width: 760px;
+        background: rgba(255,255,255,0.88);
+        color: #07101a;
+        border-radius: 14px;
+        padding: 18px 22px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+        transform: translateY(6px);
+        transition: transform .22s ease, opacity .22s ease;
+        font-family: inherit;
+    `;
+
+    // Title + content
+    const title = document.createElement('h1');
+    title.className = 'welcome-title';
+    title.textContent = 'The Spectral Haven';
+    title.style.cssText = 'margin:0 0 6px 0;font-size:20px;';
+
+    const p = document.createElement('p');
+    p.className = 'welcome-subtitle';
+    p.style.cssText = 'margin:8px 0 12px 0;white-space:pre-wrap;line-height:1.45;font-size:14.5px;color:#0b1720;';
+    p.textContent = `Welcome, traveler. The Grove awakens with every step you take. 
+                        The Spectral Haven is a cozy little creation — stitched from strange tools, 
+                        whispering components, and reanimated ideas powered by Kiro’s enchanting code. 
+                        It’s a haunted workshop filled with glowing orbs, Whisper Well, and playful effects crafted for you. 
+                        Enjoy this Haunted Journey!!!`;
+
+    // Close button row (right aligned)
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;justify-content:flex-end;margin-top:6px;';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.id = 'welcome-close';
+    closeBtn.className = 'welcome-close';
+    closeBtn.textContent = '✨ Enter The Haven ✨';
+    closeBtn.style.cssText = `
+        background: linear-gradient(180deg,#ffffff,#eafbf8);
+        border-radius:10px;
+        border:1px solid rgba(0,0,0,0.06);
+        padding:8px 12px;
+        cursor:pointer;
+        font-size:14px;
+    `;
+
+    btnRow.appendChild(closeBtn);
+    card.appendChild(title);
+    card.appendChild(p);
+    card.appendChild(btnRow);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    // Animate card into place
+    requestAnimationFrame(() => {
+        card.style.transform = 'translateY(0)';
+        card.style.opacity = '1';
+    });
+
+    // Close handler
+    const removeModal = () => {
+        // animate out
+        card.style.transform = 'translateY(8px)';
+        card.style.opacity = '0';
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            if (overlay && overlay.parentElement) overlay.parentElement.removeChild(overlay);
+        }, 240);
+    };
+
+    closeBtn.addEventListener('click', removeModal);
+
+    // Click on dim (outside dialog) closes modal
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) removeModal();
+    });
+
+    // Escape key closes modal
+    const onKey = (e) => { if (e.key === 'Escape') removeModal(); };
+    document.addEventListener('keydown', onKey);
+
+    // cleanup listener after removal
+    const cleanup = () => {
+        try { document.removeEventListener('keydown', onKey); } catch(e){}
+    };
+    // Ensure cleanup after removal
+    setTimeout(cleanup, 500);
+
+    // Play shimmer sound when modal appears (safe call)
+    setTimeout(() => {
+        try {
+            if (window.audioManager && typeof window.audioManager.playSFX === 'function') {
+                window.audioManager.playSFX('shimmer');
+            } else if (this.playSfx && typeof this.playSfx === 'function') {
+                this.playSfx();
+            }
+        } catch (e) { /* ignore */ }
+    }, 180);
+}
 
     // Play shimmer sound (AudioManager)
     if (window.audioManager && typeof window.audioManager.playSFX === 'function') {
