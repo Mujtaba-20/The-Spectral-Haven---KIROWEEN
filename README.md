@@ -7,8 +7,11 @@ A Halloween-themed productivity web application featuring task management, focus
 - **Haunted To-Do List**: Manage tasks with animated ghost representations
 - **Focus Chamber**: Track focus sessions with a mystical stopwatch
 - **Whisper Well**: Symbolic text release ritual (privacy-focused, no data saved)
-- **Mood Tracker**: Track daily moods with ghost icons and visualizations
+- **Mood Grove Tracker**: Track daily moods with ghost icons and visualizations
 - **Nightfall Candle Timer**: Visual countdown timer with melting candle animation
+- **Spooky Tic-Tac-Toe**: A ghost-vs-pumpkin showdown where you battle in a haunted grid
+- **Spooky Title Generator**: Upload an image and let the system conjure a chilling, theme-matched spooky title
+- **Radiant Spehere**: Mystical orb giving uplifting affirmations infused with supernatural ambience SFX
 - **Persistent Background World**: Animated Halloween scene across all pages
 - **Ghost Cursor Trail**: Magical trailing effect following your cursor
 - **Day/Night Themes**: Switch between light and dark atmospheric modes
@@ -147,6 +150,20 @@ Then open `http://localhost:8000` in your browser.
 2. Select a duration (5, 10, 15, or 30 minutes)
 3. Click "Start" to watch the candle melt
 4. When time expires, the flame extinguishes with a smoke effect
+
+### 👻 Spooky Tic-Tac-Toe
+1. Choose your side: Ghost or Pumpkin
+2. Tap any tile on the haunted grid to place your mark
+3. Watch the board react with spooky animations
+4. First to align three wins the spectral showdown with a dramatic SFX
+5. Restart anytime for another ghost–pumpkin battle
+6. You can also reset the scores
+
+### 📸 Spooky Title Generator
+1. Upload an image from your device
+2. Wait a moment as the system analyzes the vibe
+3. A thematic, spooky title is generated automatically
+4. Try different images to summon different eerie titles
 
 ### Settings & Customization
 
