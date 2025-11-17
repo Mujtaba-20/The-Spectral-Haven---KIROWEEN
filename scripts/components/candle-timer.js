@@ -331,7 +331,7 @@ export class CandleTimer {
         }
     }
 
-    // --- Main visual updater: shrink wax rect, reposition flame/wick/glow accordingly ---
+    // --- Updated: move flame by altering ellipse cy attrs and wick coords ---
     updateCandleVisual(remainingPercent) {
         // Ensure cached original positions
         if (!this._candleOriginals) this._cacheCandleOriginals();
@@ -340,40 +340,46 @@ export class CandleTimer {
         if (!o) return;
 
         const rect = document.querySelector('.candle-wax');
-        const flameGroup = document.querySelector('.candle-flame');
+        const flameEllipses = o.flameEllipses || [];
         const wick = document.querySelector('.candle-wick');
         const glow = document.querySelector('.candle-glow');
 
-        // Safety checks
-        if (!rect || !flameGroup || !wick || !glow) return;
+        if (!rect || !wick || !glow) return;
 
         // Compute new wax rect
-        const newHeight = Math.max(6, Math.round(o.waxHeight * remainingPercent));
+        const minHeight = 6;
+        const newHeight = Math.max(minHeight, Math.round(o.waxHeight * remainingPercent));
         const newY = o.waxY + (o.waxHeight - newHeight);
 
         rect.setAttribute('y', newY);
         rect.setAttribute('height', newHeight);
 
-        // Position flame: we want the flame base a few px above the wax top
+        // Position flame: base a few px above the wax top
         const flameOffsetAboveWax = 8; // px gap between wax top and flame base
-        const desiredFlameCy = newY - flameOffsetAboveWax;
-        const dy = desiredFlameCy - o.flameCy;
+        const desiredFlameBaseCy = newY - flameOffsetAboveWax;
 
-        // Move the flame group by setting its transform (translate on Y)
-        flameGroup.setAttribute('transform', `translate(0, ${dy})`);
+        // Compute dy relative to original flame ellipse positions
+        const dy1 = desiredFlameBaseCy - o.flameEllipseCy1;
+        const dy2 = desiredFlameBaseCy - o.flameEllipseCy2;
 
-        // Move wick coordinates by same dy
-        wick.setAttribute('y1', o.wickY1 + dy);
-        wick.setAttribute('y2', o.wickY2 + dy);
+        // Update each flame ellipse absolute cy (use cached element refs if available)
+        if (flameEllipses[0]) {
+            flameEllipses[0].setAttribute('cy', o.flameEllipseCy1 + dy1);
+        }
+        if (flameEllipses[1]) {
+            flameEllipses[1].setAttribute('cy', o.flameEllipseCy2 + dy2);
+        }
 
-        // Move glow (ellipse) down/up by dy (adjust cx/cy)
-        glow.setAttribute('cy', o.glowCy + dy);
+        // Update wick coordinates by same dy (use dy1 as primary)
+        wick.setAttribute('y1', o.wickY1 + dy1);
+        wick.setAttribute('y2', o.wickY2 + dy1);
 
-        // Dim glow as wax reduces
+        // Move glow ellipse vertically and fade it with remainingPercent
+        glow.setAttribute('cy', o.glowCy + dy1);
         const glowOpacity = Math.max(0, 0.6 * remainingPercent);
         glow.style.opacity = glowOpacity;
 
-        // Also adjust drips' startY if needed indirectly (createDrip uses current wax top)
+        // Also adjust drips' startY implicitly (createDrip reads rect.y)
     }
 
     // Cache initial positions and dimensions from SVG so all updates are relative
@@ -393,9 +399,10 @@ export class CandleTimer {
         const waxY = parseFloat(rect.getAttribute('y'));
         const waxHeight = parseFloat(rect.getAttribute('height'));
 
-        // find flame innermost ellipse to get its cy
-        const flameInner = flameGroup.querySelector('ellipse');
-        const flameCy = flameInner ? parseFloat(flameInner.getAttribute('cy')) : 45;
+        // capture the two flame ellipses (outer then inner)
+        const flameEllipses = Array.from(flameGroup.querySelectorAll('ellipse'));
+        const flameEllipseCy1 = flameEllipses[0] ? parseFloat(flameEllipses[0].getAttribute('cy')) : 45;
+        const flameEllipseCy2 = flameEllipses[1] ? parseFloat(flameEllipses[1].getAttribute('cy')) : (flameEllipseCy1 + 3);
 
         const wickY1 = parseFloat(wick.getAttribute('y1'));
         const wickY2 = parseFloat(wick.getAttribute('y2'));
@@ -405,10 +412,12 @@ export class CandleTimer {
         this._candleOriginals = {
             waxY,
             waxHeight,
-            flameCy,
+            flameEllipseCy1,
+            flameEllipseCy2,
             wickY1,
             wickY2,
-            glowCy
+            glowCy,
+            flameEllipses // keep references to the ellipse elements for fast updates
         };
     }
 
