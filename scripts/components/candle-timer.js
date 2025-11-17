@@ -1,4 +1,4 @@
-// Nightfall Candle Timer Component - Robust version (drop-in replacement)
+// Nightfall Candle Timer Component - wax strips removed
 
 export class CandleTimer {
     constructor() {
@@ -65,6 +65,7 @@ export class CandleTimer {
     }
 
     renderCandleTimer() {
+        // NOTE: Removed the static wax-buildup-permanent group (the long wax strips).
         return `
             <div class="card candle-timer-container">
                 <div class="candle-controls">
@@ -133,26 +134,9 @@ export class CandleTimer {
                         <g class="candle-wax-container">
                             <rect class="candle-wax" x="30" y="65" width="40" height="115" fill="url(#waxGradient)" rx="2"/>
                             
-                            <g class="wax-buildup-permanent">
-                                <path d="M 32 70 Q 31 90 30 110 Q 29 130 28 150 Q 27 165 26 178" stroke="#d4a574" stroke-width="1.5" fill="none" opacity="0.6"/>
-                                <path d="M 38 75 Q 37 95 36 115 Q 35 135 34 155 Q 33 170 32 178" stroke="#d4a574" stroke-width="1.2" fill="none" opacity="0.5"/>
-                                <path d="M 45 68 Q 44 88 43 108 Q 42 128 41 148 Q 40 168 39 178" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.5"/>
-                                <path d="M 55 68 Q 56 88 57 108 Q 58 128 59 148 Q 60 168 61 178" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.5"/>
-                                <path d="M 62 75 Q 63 95 64 115 Q 65 135 66 155 Q 67 170 68 178" stroke="#d4a574" stroke-width="1.2" fill="none" opacity="0.5"/>
-                                <path d="M 68 70 Q 69 90 70 110 Q 71 130 72 150 Q 73 165 74 178" stroke="#d4a574" stroke-width="1.5" fill="none" opacity="0.6"/>
-                                <ellipse cx="28" cy="178" rx="4" ry="2" fill="#d4a574" opacity="0.7"/>
-                                <ellipse cx="35" cy="179" rx="5" ry="2.5" fill="#d4a574" opacity="0.7"/>
-                                <ellipse cx="42" cy="178" rx="3.5" ry="2" fill="#d4a574" opacity="0.6"/>
-                                <ellipse cx="50" cy="179" rx="4.5" ry="2.5" fill="#d4a574" opacity="0.7"/>
-                                <ellipse cx="58" cy="178" rx="3.5" ry="2" fill="#d4a574" opacity="0.6"/>
-                                <ellipse cx="65" cy="179" rx="5" ry="2.5" fill="#d4a574" opacity="0.7"/>
-                                <ellipse cx="72" cy="178" rx="4" ry="2" fill="#d4a574" opacity="0.7"/>
-                                <ellipse cx="33" cy="175" rx="2.5" ry="1.5" fill="#d4a574" opacity="0.5"/>
-                                <ellipse cx="47" cy="176" rx="2" ry="1" fill="#d4a574" opacity="0.5"/>
-                                <ellipse cx="53" cy="175" rx="2.5" ry="1.5" fill="#d4a574" opacity="0.5"/>
-                                <ellipse cx="67" cy="176" rx="2" ry="1" fill="#d4a574" opacity="0.5"/>
-                            </g>
+                            <!-- Removed static wax-buildup-permanent group (strips) -->
                             
+                            <!-- Wax drips container (dynamic drops only) -->
                             <g class="wax-drips"></g>
                         </g>
                         
@@ -301,7 +285,6 @@ export class CandleTimer {
         const flameEllipses = o.flameEllipses || [];
         const wick = document.querySelector('.candle-wick');
         const glow = document.querySelector('.candle-glow');
-        const waxBuildup = document.querySelector('.wax-buildup-permanent');
 
         if (!rect || !wick || !glow) {
             console.warn('CandleTimer: essential SVG parts missing', { rect, wick, glow });
@@ -317,17 +300,6 @@ export class CandleTimer {
             rect.setAttribute('height', newHeight);
         } catch (e) {
             console.error('CandleTimer: failed to set wax rect attributes', e);
-        }
-
-        // move wax buildup group with wax (so trails/pools follow)
-        if (waxBuildup) {
-            const dyWax = (o.waxHeight - newHeight);
-            try {
-                waxBuildup.setAttribute('transform', translate(0, ${dyWax * 0.98}));
-                waxBuildup.style.opacity = Math.max(0.25, remainingPercent);
-            } catch (e) {
-                // fallback: ignore transform errors
-            }
         }
 
         // flame desired position (above wax)
@@ -418,7 +390,7 @@ export class CandleTimer {
         const seconds = Math.floor((remaining % 60000) / 1000);
         const display = document.querySelector('.time-remaining');
         if (display) {
-            display.textContent = ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')};
+            display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
     }
 
@@ -448,13 +420,14 @@ export class CandleTimer {
         const x = 30 + Math.random() * 40;
         const size = 1.5 + Math.random() * 1.5;
 
-        const trailLength = 40 + Math.random() * 60;
+        // temporary wax trail (small line) — these are short and will fall with animation; not static strips
+        const trailLength = 20 + Math.random() * 30;
         const trail = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         trail.setAttribute('x1', x); trail.setAttribute('y1', startY);
         trail.setAttribute('x2', x + (Math.random() - 0.5) * 5);
         trail.setAttribute('y2', startY + trailLength);
-        trail.setAttribute('stroke', '#d4a574'); trail.setAttribute('stroke-width', '1.2');
-        trail.setAttribute('opacity', '0.6'); trail.classList.add('wax-trail');
+        trail.setAttribute('stroke', '#d4a574'); trail.setAttribute('stroke-width', '1.0');
+        trail.setAttribute('opacity', '0.5'); trail.classList.add('wax-trail');
         dripsContainer.appendChild(trail);
 
         const drip = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
@@ -474,12 +447,13 @@ export class CandleTimer {
             currentY += speed;
             opacity -= 0.004;
             drip.setAttribute('cy', currentY);
-            drip.setAttribute('opacity', Math.max(0.4, opacity));
+            drip.setAttribute('opacity', Math.max(0.35, opacity));
             const stretch = 1 + (speed * 0.15);
             drip.setAttribute('ry', size * 1.5 * stretch);
             if (currentY >= endY) {
                 this.createSplash(x, endY);
                 try { drip.remove(); } catch(e){}
+                try { trail.remove(); } catch(e){} // remove temporary trail when drip finishes
             } else {
                 requestAnimationFrame(animateDrip);
             }
