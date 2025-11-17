@@ -45,58 +45,57 @@ export class HomePage {
         this.playIntro();
     }
 
-    showWelcomeModal() {
-        // Check if user has seen welcome modal
-        const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
-        
-        if (!hasSeenWelcome) {
-            const modal = document.createElement('div');
-            modal.className = 'welcome-modal';
-            modal.innerHTML = `
-                <div class="welcome-content">
-                    <div class="welcome-sparkles">
-                        <div class="sparkle-dot"></div>
-                        <div class="sparkle-dot"></div>
-                        <div class="sparkle-dot"></div>
-                        <div class="sparkle-dot"></div>
-                        <div class="sparkle-dot"></div>
-                    </div>
-                    <h1 class="welcome-title">The Spectral Haven</h1>
-                    <p class="welcome-subtitle">
-                        Welcome, traveler. The Grove awakens with every step you take. 
+showWelcomeModal() {
+    // ALWAYS show the welcome modal on page load
+    const modal = document.createElement('div');
+    modal.className = 'welcome-modal';
+    modal.innerHTML = `
+        <div class="welcome-content">
+            <div class="welcome-sparkles">
+                <div class="sparkle-dot"></div>
+                <div class="sparkle-dot"></div>
+                <div class="sparkle-dot"></div>
+                <div class="sparkle-dot"></div>
+                <div class="sparkle-dot"></div>
+            </div>
+            <h1 class="welcome-title">The Spectral Haven</h1>
+            <p class="welcome-subtitle">
+                Welcome, traveler. The Grove awakens with every step you take. 
                         The Spectral Haven is a cozy little creation — stitched from strange tools, 
-                        whispering components, and reanimated ideas that all wake up when you step inside. 
-                        It's a haunted workshop where everything feels alive, curious, and just a little enchanted. 
+                        whispering components, and reanimated ideas powered by Kiro’s enchanting code. 
+                        It’s a haunted workshop filled with glowing orbs, Whisper Well, and playful effects crafted for you. 
                         Enjoy this Haunted Journey!!!
-                    </p>
-                    <button class="welcome-close" id="welcome-close">
-                        ✨ Enter The Haven ✨
-                    </button>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Close modal on button click
-            const closeBtn = document.getElementById('welcome-close');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => {
-                    modal.style.animation = 'modalFadeIn 0.3s ease-out reverse';
-                    setTimeout(() => {
-                        modal.remove();
-                        localStorage.setItem('hasSeenWelcome', 'true');
-                    }, 300);
-                });
-            }
-            
-            // Play shimmer sound when modal appears
-            if (window.audioManager) {
-                setTimeout(() => {
-                    window.audioManager.playSFX('shimmer');
-                }, 200);
-            }
-        }
+            </p>
+            <button class="welcome-close" id="welcome-close">
+                ✨ Enter The Haven ✨
+            </button>
+        </div>
+    `;
+
+    // Remove any previous version (safety)
+    const existing = document.querySelector('.welcome-modal');
+    if (existing) existing.remove();
+
+    document.body.appendChild(modal);
+
+    // Close button logic
+    const closeBtn = document.getElementById('welcome-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.style.animation = 'modalFadeIn 0.3s ease-out reverse';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        });
     }
+
+    // Play shimmer sound (AudioManager)
+    if (window.audioManager && typeof window.audioManager.playSFX === 'function') {
+        setTimeout(() => {
+            window.audioManager.playSFX('shimmer');
+        }, 200);
+    }
+}
 
     playIntro() {
         // Play intro when homepage loads (after audio context is enabled)
