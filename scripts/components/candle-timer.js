@@ -10,6 +10,9 @@ export class CandleTimer {
         this.animationFrame = null;
         this.drips = [];
         this.dripInterval = null;
+
+        // Cache of original SVG values (populated on first render/update)
+        this._candleOriginals = null;
     }
 
     getSettings() {
@@ -116,7 +119,7 @@ export class CandleTimer {
                             </ellipse>
                         </g>
                         
-                        <!-- Flame -->
+                        <!-- Flame group -->
                         <g class="candle-flame">
                             <ellipse cx="50" cy="45" rx="12" ry="20" fill="url(#flameGradient)"/>
                             <ellipse cx="50" cy="48" rx="8" ry="12" fill="#fff5e6" opacity="0.8"/>
@@ -126,13 +129,12 @@ export class CandleTimer {
                         <line class="candle-wick" x1="50" y1="45" x2="50" y2="65" stroke="#333" stroke-width="2"/>
                         
                         <!-- Wax body container -->
-                        <g class="candle-wax-container" transform-origin="50 180">
+                        <g class="candle-wax-container">
                             <rect class="candle-wax" x="30" y="65" width="40" height="115" 
                                   fill="url(#waxGradient)" rx="2"/>
                             
                             <!-- Pre-existing wax buildup and trails -->
                             <g class="wax-buildup-permanent">
-                                <!-- Wax trails down the sides -->
                                 <path d="M 32 70 Q 31 90 30 110 Q 29 130 28 150 Q 27 165 26 178" 
                                       stroke="#d4a574" stroke-width="1.5" fill="none" opacity="0.6"/>
                                 <path d="M 38 75 Q 37 95 36 115 Q 35 135 34 155 Q 33 170 32 178" 
@@ -146,7 +148,6 @@ export class CandleTimer {
                                 <path d="M 68 70 Q 69 90 70 110 Q 71 130 72 150 Q 73 165 74 178" 
                                       stroke="#d4a574" stroke-width="1.5" fill="none" opacity="0.6"/>
                                 
-                                <!-- Small wax pools at the base -->
                                 <ellipse cx="28" cy="178" rx="4" ry="2" fill="#d4a574" opacity="0.7"/>
                                 <ellipse cx="35" cy="179" rx="5" ry="2.5" fill="#d4a574" opacity="0.7"/>
                                 <ellipse cx="42" cy="178" rx="3.5" ry="2" fill="#d4a574" opacity="0.6"/>
@@ -155,7 +156,6 @@ export class CandleTimer {
                                 <ellipse cx="65" cy="179" rx="5" ry="2.5" fill="#d4a574" opacity="0.7"/>
                                 <ellipse cx="72" cy="178" rx="4" ry="2" fill="#d4a574" opacity="0.7"/>
                                 
-                                <!-- Additional smaller drips -->
                                 <ellipse cx="33" cy="175" rx="2.5" ry="1.5" fill="#d4a574" opacity="0.5"/>
                                 <ellipse cx="47" cy="176" rx="2" ry="1" fill="#d4a574" opacity="0.5"/>
                                 <ellipse cx="53" cy="175" rx="2.5" ry="1.5" fill="#d4a574" opacity="0.5"/>
@@ -298,6 +298,7 @@ export class CandleTimer {
         }
 
         // Reset visual
+        this._candleOriginals = null; // force recalculation
         this.updateCandleVisual(1.0);
         this.updateDisplay();
         
@@ -307,17 +308,11 @@ export class CandleTimer {
             messageEl.classList.remove('visible');
         }
 
-        // Reset flame
+        // Reset flame & smoke
         const flame = document.querySelector('.candle-flame');
-        if (flame) {
-            flame.style.opacity = '1';
-        }
-
-        // Hide smoke
+        if (flame) flame.style.opacity = '1';
         const smoke = document.querySelector('.candle-smoke');
-        if (smoke) {
-            smoke.style.opacity = '0';
-        }
+        if (smoke) smoke.style.opacity = '0';
     }
 
     animate() {
@@ -336,33 +331,85 @@ export class CandleTimer {
         }
     }
 
+    // --- Main visual updater: shrink wax rect, reposition flame/wick/glow accordingly ---
     updateCandleVisual(remainingPercent) {
-        const waxContainer = document.querySelector('.candle-wax-container');
-        const flame = document.querySelector('.candle-flame');
+        // Ensure cached original positions
+        if (!this._candleOriginals) this._cacheCandleOriginals();
+
+        const o = this._candleOriginals;
+        if (!o) return;
+
+        const rect = document.querySelector('.candle-wax');
+        const flameGroup = document.querySelector('.candle-flame');
         const wick = document.querySelector('.candle-wick');
         const glow = document.querySelector('.candle-glow');
-        
-        if (waxContainer) {
-            waxContainer.style.transform = `scaleY(${remainingPercent})`;
+
+        // Safety checks
+        if (!rect || !flameGroup || !wick || !glow) return;
+
+        // Compute new wax rect
+        const newHeight = Math.max(6, Math.round(o.waxHeight * remainingPercent));
+        const newY = o.waxY + (o.waxHeight - newHeight);
+
+        rect.setAttribute('y', newY);
+        rect.setAttribute('height', newHeight);
+
+        // Position flame: we want the flame base a few px above the wax top
+        const flameOffsetAboveWax = 8; // px gap between wax top and flame base
+        const desiredFlameCy = newY - flameOffsetAboveWax;
+        const dy = desiredFlameCy - o.flameCy;
+
+        // Move the flame group by setting its transform (translate on Y)
+        flameGroup.setAttribute('transform', `translate(0, ${dy})`);
+
+        // Move wick coordinates by same dy
+        wick.setAttribute('y1', o.wickY1 + dy);
+        wick.setAttribute('y2', o.wickY2 + dy);
+
+        // Move glow (ellipse) down/up by dy (adjust cx/cy)
+        glow.setAttribute('cy', o.glowCy + dy);
+
+        // Dim glow as wax reduces
+        const glowOpacity = Math.max(0, 0.6 * remainingPercent);
+        glow.style.opacity = glowOpacity;
+
+        // Also adjust drips' startY if needed indirectly (createDrip uses current wax top)
+    }
+
+    // Cache initial positions and dimensions from SVG so all updates are relative
+    _cacheCandleOriginals() {
+        const rect = document.querySelector('.candle-wax');
+        const flameGroup = document.querySelector('.candle-flame');
+        const wick = document.querySelector('.candle-wick');
+        const glow = document.querySelector('.candle-glow');
+
+        if (!rect || !flameGroup || !wick || !glow) {
+            // If missing, keep null and bail out
+            this._candleOriginals = null;
+            return;
         }
 
-        if (flame) {
-            const flameY = (1 - remainingPercent) * 115; // 115 is wax height
-            flame.style.transform = `translateY(${flameY}px)`;
-        }
+        // wax rect attributes
+        const waxY = parseFloat(rect.getAttribute('y'));
+        const waxHeight = parseFloat(rect.getAttribute('height'));
 
-        if (wick) {
-            const wickY = (1 - remainingPercent) * 115;
-            wick.style.transform = `translateY(${wickY}px)`;
-        }
+        // find flame innermost ellipse to get its cy
+        const flameInner = flameGroup.querySelector('ellipse');
+        const flameCy = flameInner ? parseFloat(flameInner.getAttribute('cy')) : 45;
 
-        if (glow) {
-            const glowY = (1 - remainingPercent) * 115;
-            // Dim the glow as candle burns down (opacity decreases)
-            const glowOpacity = 0.6 * remainingPercent; // From 0.6 to 0
-            glow.style.transform = `translateY(${glowY}px)`;
-            glow.style.opacity = glowOpacity;
-        }
+        const wickY1 = parseFloat(wick.getAttribute('y1'));
+        const wickY2 = parseFloat(wick.getAttribute('y2'));
+
+        const glowCy = parseFloat(glow.getAttribute('cy'));
+
+        this._candleOriginals = {
+            waxY,
+            waxHeight,
+            flameCy,
+            wickY1,
+            wickY2,
+            glowCy
+        };
     }
 
     updateDisplay() {
@@ -379,7 +426,7 @@ export class CandleTimer {
     startDripAnimation() {
         this.stopDripAnimation();
         
-        // Much more frequent drips - between 400ms to 1 second
+        // More frequent drips - between 400ms to 1 second
         this.dripInterval = setInterval(() => {
             this.createDrip();
         }, 400 + Math.random() * 600);
@@ -401,10 +448,12 @@ export class CandleTimer {
 
     createDrip() {
         const dripsContainer = document.querySelector('.wax-drips');
-        if (!dripsContainer) return;
+        const rect = document.querySelector('.candle-wax');
+        if (!dripsContainer || !rect) return;
 
+        // Determine current top of wax as startY
+        const startY = parseFloat(rect.getAttribute('y')) + 2; // small offset
         const x = 30 + Math.random() * 40; // Random x position on candle
-        const startY = 65; // Top of wax body
         const size = 1.5 + Math.random() * 1.5; // Larger varying drip sizes
 
         // Create longer wax trail down the side (permanent)
@@ -558,7 +607,7 @@ export class CandleTimer {
             if (ellipse) {
                 const animations = ellipse.querySelectorAll('animate');
                 animations.forEach(anim => {
-                    anim.beginElement();
+                    try { anim.beginElement(); } catch(e){}
                 });
             }
         }
@@ -586,5 +635,6 @@ export class CandleTimer {
             cancelAnimationFrame(this.animationFrame);
         }
         this.stopDripAnimation();
+        this._candleOriginals = null;
     }
 }
