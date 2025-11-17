@@ -1,4 +1,4 @@
-// Nightfall Candle Timer Component - wax strips removed
+// Nightfall Candle Timer Component - Robust version with reliable blow-away animation
 
 export class CandleTimer {
     constructor() {
@@ -65,7 +65,7 @@ export class CandleTimer {
     }
 
     renderCandleTimer() {
-        // NOTE: Removed the static wax-buildup-permanent group (the long wax strips).
+        // NOTE: This version keeps dynamic drips but removes static long wax strips.
         return `
             <div class="card candle-timer-container">
                 <div class="candle-controls">
@@ -133,8 +133,6 @@ export class CandleTimer {
                         
                         <g class="candle-wax-container">
                             <rect class="candle-wax" x="30" y="65" width="40" height="115" fill="url(#waxGradient)" rx="2"/>
-                            
-                            <!-- Removed static wax-buildup-permanent group (strips) -->
                             
                             <!-- Wax drips container (dynamic drops only) -->
                             <g class="wax-drips"></g>
@@ -269,6 +267,117 @@ export class CandleTimer {
             this.running = false;
             if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
             this.animationFrame = null;
+        }
+    }
+
+    // --- complete() with robust blow-away handling ---
+    complete() {
+        // stop running state
+        this.running = false;
+
+        // update UI buttons
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        if (startBtn) startBtn.disabled = true;
+        if (pauseBtn) pauseBtn.disabled = true;
+
+        // stop audio & drips
+        try {
+            if (window.audioManager) {
+                window.audioManager.stopLoopingSFX && window.audioManager.stopLoopingSFX('candle-timer');
+            }
+        } catch (e) { /* ignore */ }
+        this.stopDripAnimation();
+
+        // Animate flame (lift + fade), then show smoke & completion text
+        try {
+            this.animateFlameOut();
+        } catch (e) {
+            console.error('CandleTimer.complete: animateFlameOut failed', e);
+            // fallback: ensure smoke and message still appear
+            this.showSmoke();
+            this.showCompletionMessage();
+        }
+    }
+
+    // --- animateFlameOut() that reliably lifts + fades flame and wick ---
+    animateFlameOut() {
+        const flame = document.querySelector('.candle-flame');
+        const wick = document.querySelector('.candle-wick');
+
+        if (!flame && !wick) {
+            // nothing to animate — directly show smoke & message
+            this.showSmoke();
+            this.showCompletionMessage();
+            return;
+        }
+
+        // Ensure we have a transition style applied
+        const applyTransition = (el) => {
+            if (!el) return;
+            el.style.transition = 'transform 900ms cubic-bezier(.2,.9,.2,1), opacity 900ms ease-out';
+            el.style.willChange = 'transform, opacity';
+        };
+
+        applyTransition(flame);
+        applyTransition(wick);
+
+        // Force layout so transition will animate
+        void (flame && flame.getBoundingClientRect());
+        void (wick && wick.getBoundingClientRect());
+
+        // Setup a safe transitionend handler with timeout fallback
+        let done = false;
+        const finish = () => {
+            if (done) return;
+            done = true;
+
+            // remove or hide flame/wick so they don't block interactions
+            try {
+                if (flame && flame.parentElement) flame.parentElement.removeChild(flame);
+            } catch (e) { /* ignore */ }
+            try {
+                if (wick && wick.parentElement) wick.parentElement.removeChild(wick);
+            } catch (e) { /* ignore */ }
+
+            // show smoke and completion
+            this.showSmoke();
+            this.showCompletionMessage();
+        };
+
+        const onTransitionEnd = (ev) => {
+            // ensure we listen for either opacity or transform end
+            if (ev.target === flame || ev.target === wick) {
+                finish();
+            }
+        };
+
+        if (flame) flame.addEventListener('transitionend', onTransitionEnd, { once: true });
+        if (wick) wick.addEventListener('transitionend', onTransitionEnd, { once: true });
+
+        // Fallback timeout in case transitionend doesn't fire (e.g., removed by browser)
+        const fallbackTimeout = setTimeout(() => {
+            finish();
+        }, 1100);
+
+        // Trigger the visual "blow away" — lift up, shrink, fade
+        try {
+            if (flame) {
+                flame.style.transformOrigin = '50% 60%';
+                flame.style.transform = 'translateY(-28px) scale(0.6)';
+                flame.style.opacity = '0';
+            }
+            if (wick) {
+                // wick lifts and shortens visually by scaling Y smaller
+                wick.style.transformOrigin = '50% 0%';
+                wick.style.transform = 'translateY(-28px) scaleY(0.6)';
+                wick.style.opacity = '0';
+            }
+        } catch (e) {
+            console.warn('CandleTimer.animateFlameOut: failed to apply transforms', e);
+            // fallback immediately
+            clearTimeout(fallbackTimeout);
+            finish();
         }
     }
 
@@ -420,7 +529,7 @@ export class CandleTimer {
         const x = 30 + Math.random() * 40;
         const size = 1.5 + Math.random() * 1.5;
 
-        // temporary wax trail (small line) — these are short and will fall with animation; not static strips
+        // temporary wax trail (small line) — these are short and will fall with animation
         const trailLength = 20 + Math.random() * 30;
         const trail = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         trail.setAttribute('x1', x); trail.setAttribute('y1', startY);
@@ -492,27 +601,6 @@ export class CandleTimer {
             };
             animateSplash();
         }
-    }
-
-    complete() {
-        this.running = false;
-        const startBtn = document.getElementById('start-btn');
-        const pauseBtn = document.getElementById('pause-btn');
-        if (startBtn) startBtn.disabled = true;
-        if (pauseBtn) pauseBtn.disabled = true;
-        if (window.audioManager) window.audioManager.stopLoopingSFX('candle-timer');
-        this.stopDripAnimation();
-        this.animateFlameOut();
-        this.showCompletionMessage();
-    }
-
-    animateFlameOut() {
-        const flame = document.querySelector('.candle-flame');
-        if (flame) {
-            flame.style.transition = 'opacity 1s ease-out';
-            flame.style.opacity = '0';
-        }
-        setTimeout(() => this.showSmoke(), 500);
     }
 
     showSmoke() {
