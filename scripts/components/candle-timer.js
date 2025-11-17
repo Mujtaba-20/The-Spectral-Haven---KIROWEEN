@@ -182,22 +182,27 @@ export class CandleTimer {
         }
     }
 
-    setDuration(minutes) {
-        if (this.running) return;
-        if (!minutes || isNaN(minutes) || minutes <= 0) {
-            this.duration = 0;
-        } else {
-            // data-duration is in minutes; 0.5 => 30 seconds
-            this.duration = Math.round(minutes * 60 * 1000);
-        }
-        this.elapsed = 0;
-        this.updateDisplay();
-        const startBtn = document.getElementById('start-btn');
-        if (startBtn) startBtn.disabled = this.duration === 0;
-        // clear any completion message
-        const msg = document.querySelector('.completion-message');
-        if (msg) msg.classList.remove('visible');
+setDuration(minutes) {
+    if (this.running) return;
+
+    // Important: check only NaN, not falsy (0.5 is valid!)
+    if (isNaN(minutes) || minutes <= 0) {
+        this.duration = 0;
+    } else {
+        this.duration = minutes * 60 * 1000;  
     }
+
+    this.elapsed = 0;
+    this.updateDisplay();
+
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) startBtn.disabled = this.duration === 0;
+
+    // clear any old completion message
+    const msg = document.querySelector('.completion-message');
+    if (msg) msg.classList.remove('visible');
+}
+
 
     start() {
         if (this.duration === 0 || this.running) return;
