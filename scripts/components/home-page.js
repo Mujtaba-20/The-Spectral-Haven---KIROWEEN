@@ -46,7 +46,14 @@ export class HomePage {
     }
 
 showWelcomeModal() {
-    // ALWAYS show the welcome modal on page load
+    // Detect a full page load (NOT SPA navigation)
+    const isFullReload =
+        performance.getEntriesByType("navigation")[0]?.type === "reload" ||
+        performance.getEntriesByType("navigation")[0]?.type === "navigate";
+
+    // If not a full reload, do nothing
+    if (!isFullReload) return;
+
     const modal = document.createElement('div');
     modal.className = 'welcome-modal';
     modal.innerHTML = `
@@ -61,10 +68,10 @@ showWelcomeModal() {
             <h1 class="welcome-title">The Spectral Haven</h1>
             <p class="welcome-subtitle">
                 Welcome, traveler. The Grove awakens with every step you take. 
-                        The Spectral Haven is a cozy little creation — stitched from strange tools, 
-                        whispering components, and reanimated ideas powered by Kiro’s enchanting code. 
-                        It’s a haunted workshop filled with glowing orbs, Whisper Well, and playful effects crafted for you. 
-                        Enjoy this Haunted Journey!!!
+                The Spectral Haven is a cozy little creation — stitched from strange tools, 
+                whispering components, and reanimated ideas powered by Kiro’s enchanting code. 
+                It’s a haunted workshop filled with glowing orbs, Whisper Well, and playful effects crafted for you. 
+                Enjoy this Haunted Journey!!!
             </p>
             <button class="welcome-close" id="welcome-close">
                 ✨ Enter The Haven ✨
@@ -72,22 +79,24 @@ showWelcomeModal() {
         </div>
     `;
 
-    // Remove any previous version (safety)
+    // Safety: remove old modal
     const existing = document.querySelector('.welcome-modal');
     if (existing) existing.remove();
 
     document.body.appendChild(modal);
 
-    // Close button logic
     const closeBtn = document.getElementById('welcome-close');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
             modal.style.animation = 'modalFadeIn 0.3s ease-out reverse';
-            setTimeout(() => {
-                modal.remove();
-            }, 300);
+            setTimeout(() => modal.remove(), 300);
         });
     }
+
+    if (window.audioManager?.playSFX) {
+        setTimeout(() => window.audioManager.playSFX('shimmer'), 200);
+    }
+}
 
     // Play shimmer sound (AudioManager)
     if (window.audioManager && typeof window.audioManager.playSFX === 'function') {
