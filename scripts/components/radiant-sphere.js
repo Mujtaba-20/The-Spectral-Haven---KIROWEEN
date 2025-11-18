@@ -7,16 +7,16 @@ export class RadiantSphere {
         this.lastAffirmationIndex = -1;
         
         this.affirmations = [
-            "The winds whisper softly in your favor today.",
-            "A quiet brightness follows your steps.",
-            "Your spark is stirring something beautiful.",
-            "The veil parts gently for your presence.",
-            "Even the shadows admire your glow.",
-            "A small blessing is already moving toward you.",
-            "Your energy hums with quiet strength.",
-            "Something good is gathering just out of sight.",
-            "The universe remembers your light.",
-            "There is warmth coiling in your future."
+            "I move through this world wrapped in a silent, ancient strength—an unseen force that clears paths for me long before my footsteps arrive.",
+            "Clarity rises within me like the first light spilling over a hidden horizon, revealing truths that were waiting patiently to be found.",
+            "With every breath, I open doors inside myself—secret chambers where wisdom, calm, and quiet revelation gather.",
+            "I am guided by a subtle inner compass, tuned not to noise but to the deep, shimmering pull of destiny.",
+            "Old burdens dissolve like mist at dawn, and what remains is a spirit sharpened, lighter, and ready for the next unfolding.",
+            "A gentle light moves through me, ancient and knowing; I don’t need to understand its workings to trust its direction.",
+            "Even when the road curves into mystery, purpose follows me like a loyal star, keeping me aligned with the path meant for me.",
+            "Peace approaches softly when I stand still—like a blessing that recognizes my name before I speak it.",
+            "Each step sends a quiet ripple into the unseen, shaping possibilities, bending outcomes, and calling good things nearer.",
+            "My heart listens beyond the surface, my mind opens to hidden guidance, and my soul remains steady—held by something vast and luminous." 
         ];
 
         // Added: guarded SFX and modal cache
