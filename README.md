@@ -98,7 +98,7 @@ Then open `http://localhost:8000` in your browser.
 
 1. Open `index.html` in your browser
 2. The app loads in **Night Mode** by default with animations and sound enabled
-3. Explore the home page "Ghostly Grove" to see mini-widgets for each feature
+3. Explore the home page "The Spectral Haven" to see mini-widgets for each feature
 4. Click any mini-widget or use keyboard shortcuts to navigate
 
 ### Navigation
@@ -110,13 +110,16 @@ Then open `http://localhost:8000` in your browser.
 
 ### Keyboard Shortcuts
 
-- `1` - Home (Ghostly Grove)
+- `1` - Home (The Spectral Haven)
 - `2` - Haunted To-Do List
 - `3` - Focus Chamber
 - `4` - Whisper Well
-- `5` - Mood Tracker
-- `6` - Nightfall Candle Timer
-- `7` - Settings
+- `5` - Mood Grove
+- `6` - Nightfall Candle
+- `7` - Spooky Tic-Tac-Toe
+- `8` - Title Generator
+- `9` - Radiant Sphere
+- `0` - Settings
 
 ### Using Each Feature
 
@@ -190,24 +193,32 @@ Requires a modern browser with ES6 module support.
 
 ```
 the-spectral-haven/
-├── index.html              # Main HTML file
-├── styles/                 # CSS files
-│   ├── main.css           # Core styles
-│   ├── themes.css         # Day/Night themes
-│   ├── background.css     # Background world
-│   ├── components.css     # Reusable components
-│   └── animations.css     # Keyframe animations
-├── scripts/               # JavaScript modules
-│   ├── main.js           # Entry point
-│   ├── router.js         # Page routing
-│   ├── audio-manager.js  # Audio handling
-│   ├── cursor-trail.js   # Cursor effect
+├── .kiro/                     # Kiroween specs, hooks, and steering
+│   ├── spec/                  # Project specification files
+│   ├── hooks/                 # Hook behaviors and triggers
+│   └── steering/              # High-level steering logic
+│
+├── index.html                 # Main HTML file
+├── styles/                    # CSS files
+│   ├── main.css               # Core styles
+│   ├── themes.css             # Day/Night themes
+│   ├── background.css         # Background world
+│   ├── components.css         # Reusable components
+│   └── animations.css         # Keyframe animations
+│
+├── scripts/                   # JavaScript modules
+│   ├── main.js                # Entry point
+│   ├── router.js              # Page routing
+│   ├── audio-manager.js       # Audio handling
+│   ├── cursor-trail.js        # Cursor effect
 │   ├── transition-manager.js  # Page transitions
-│   ├── components/       # Page components
-│   └── utils/           # Utility functions
-└── assets/              # Media files
-    ├── audio/          # Sound effects
-    └── images/         # SVG/image assets
+│   ├── components/            # Page components
+│   └── utils/                 # Utility functions
+│
+└── assets/                    # Media files
+    ├── audio/                 # Sound effects
+    └── images/                # SVG/image assets
+
 ```
 
 ## Technology Stack
