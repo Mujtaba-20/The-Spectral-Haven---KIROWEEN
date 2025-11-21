@@ -6,6 +6,93 @@ import fetch from "node-fetch";
  * Returns: { mainTitle, alt1, alt2, explanation }
  */
 
+const FEW_SHOT = `
+EXAMPLE 1 INPUT (caption): "foggy shoreline, empty pier, lanterns, seagulls"
+OUTPUT (JSON only):
+{
+  "mainTitle": "Lanterns Along the Pier",
+  "alt1": "The Pier That Listened",
+  "alt2": "Fog Between the Posts",
+  "explanation": "Empty pier + lanterns + fog → lonely maritime hush"
+}
+
+EXAMPLE 2 INPUT (caption): "abandoned nursery, cracked rocking chair, moonlight"
+OUTPUT (JSON only):
+{
+  "mainTitle": "Moonlight in the Cradle",
+  "alt1": "The Rocking That Didn't Stop",
+  "alt2": "Shadows Behind the Mobile",
+  "explanation": "Nursery + moonlight → eerie childlike imagery and slow motion dread"
+}
+`;
+
+/** sanitize model output by extracting first JSON-looking substring */
+function extractJsonFromText(text) {
+  if (!text || typeof text !== "string") return null;
+  // naive but generally robust: look for outermost curly braces block
+  const first = text.indexOf("{");
+  const last = text.lastIndexOf("}");
+  if (first === -1 || last === -1 || last <= first) return null;
+  const candidate = text.slice(first, last + 1);
+  try {
+    return JSON.parse(candidate);
+  } catch (err) {
+    // fallback: try to fix trailing commas or quotes - minimal effort
+    try {
+      const cleaned = candidate
+        .replace(/,\s*}/g, "}")
+        .replace(/,\s*]/g, "]");
+      return JSON.parse(cleaned);
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+/** Ensure titles are 2-5 words and unique; if not, create small deterministic variants */
+function postProcessTitles(parsed) {
+  const normalize = (s) => String(s || "").trim();
+  const wordsCount = (s) => (normalize(s).split(/\s+/).filter(Boolean).length);
+
+  let main = normalize(parsed.mainTitle || "");
+  let alt1 = normalize(parsed.alt1 || "");
+  let alt2 = normalize(parsed.alt2 || "");
+
+  const titles = [main, alt1, alt2].map(t => t.replace(/\s+/g, " ").trim());
+
+  // trim extremely long titles
+  for (let i = 0; i < titles.length; i++) {
+    const t = titles[i];
+    if (!t) continue;
+    const tokens = t.split(/\s+/);
+    if (tokens.length > 6) titles[i] = tokens.slice(0, 5).join(" ");
+  }
+
+  // ensure uniqueness (simple)
+  for (let i = 0; i < titles.length; i++) {
+    for (let j = i + 1; j < titles.length; j++) {
+      if (!titles[i] || !titles[j]) continue;
+      if (titles[i].toLowerCase() === titles[j].toLowerCase()) {
+        titles[j] = titles[j] + " — Echo";
+      }
+    }
+  }
+
+  // final enforcement: 2-5 words. If fewer than 2, expand with "of the ..." fallback
+  for (let i = 0; i < titles.length; i++) {
+    const wc = wordsCount(titles[i]);
+    if (!titles[i]) titles[i] = ["Spectral Echoes", "Lantern in Fog", "Whispers Beneath"][i] || "Unnamed";
+    else if (wc < 2) titles[i] = titles[i] + " of Night";
+  }
+
+  return {
+    mainTitle: titles[0],
+    alt1: titles[1],
+    alt2: titles[2],
+    explanation: normalize(parsed.explanation || parsed.reason || "") || "Generated to match image mood."
+  };
+}
+
 export async function handler(event) {
   try {
     const body = JSON.parse(event.body || "{}");
@@ -18,49 +105,38 @@ export async function handler(event) {
       };
     }
 
-    // Build instruction for Gemini Vision
-    const userInstruction = `
-You are given a single image. Analyze the mood, colors, objects, and atmosphere.
-Return exactly one JSON object (no other prose) with this format:
-
-{
-  "mainTitle": "<short cinematic spooky title>",
-  "alt1": "<alternate title 1>",
-  "alt2": "<alternate title 2>",
-  "explanation": "<one-sentence reason these match>"
-}
-
-Keep titles 2–5 words, original, atmospheric, and non-offensive.
-Extra instruction: ${extraPrompt}
+    const instruction = `
+You are a compact, cinematic horror title writer. Given a short image caption, output EXACTLY ONE JSON object and NOTHING ELSE with keys:
+"mainTitle", "alt1", "alt2", "explanation".
+Titles must be original, atmospheric, 2-5 words, use concrete nouns and strong verbs, avoid cliches, and be non-offensive.
+Do NOT include extra commentary or any surrounding text.
+${extraPrompt ? "Extra instruction: " + extraPrompt : ""}
 `;
 
-    // Build payload for Gemini Vision API (multimodal)
+    // We ask Gemini Vision to return an analysis caption + titles.
     const payload = {
       contents: [
         {
           role: "user",
           parts: [
-            { text: userInstruction },
-            // include image as bytes or uri depending on client
+            { text: `${FEW_SHOT}\n\n${instruction}\n\nInput image:` },
             imageBase64 ? { image: { imageBytes: imageBase64 } } : { image: { uri: imageUrl } }
           ]
         }
       ]
     };
 
-    // Use Gemini Vision endpoint (model that supports images)
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-vision-1:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      // no credentials needed; key is appended to URL per Netlify env var
     });
 
     if (!res.ok) {
       const text = await res.text();
-      console.error("Gemini responded", res.status, text);
+      console.error("Gemini responded", res.status, text.slice(0, 2000));
       return {
         statusCode: 502,
         body: JSON.stringify({ error: "Upstream Gemini error", status: res.status, details: text.slice(0, 1000) })
@@ -69,45 +145,43 @@ Extra instruction: ${extraPrompt}
 
     const data = await res.json();
 
-    // Extract generated text (Gemini's candidate location can vary)
+    // Candidate extraction (Gemini's response tree varies)
     const rawText =
-      data?.candidates?.[0]?.content?.parts?.find(p => p.text)?.text
+      data?.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("\n").trim()
       || data?.candidates?.[0]?.content?.parts?.[0]?.text
-      || (typeof data === "string" ? data : "{}");
+      || (typeof data === "string" ? data : "");
 
-    // Try to parse JSON out of rawText (robust)
-    let parsed = null;
-    try {
-      parsed = JSON.parse(rawText);
-    } catch (err) {
-      // Attempt to extract JSON substring
-      const match = rawText && rawText.match(/\{[\s\S]*\}/);
+    let parsed = extractJsonFromText(rawText);
+
+    // If parsing failed, try to locate JSON-like substring in the entire response
+    if (!parsed && typeof rawText === "string") {
+      const match = rawText.match(/\{[\s\S]*\}/);
       if (match) {
-        try {
-          parsed = JSON.parse(match[0]);
-        } catch (e) {
-          parsed = null;
-        }
+        try { parsed = JSON.parse(match[0]); } catch (e) { parsed = null; }
       }
     }
 
-    // Final fallback if parsing failed
-    if (!parsed || !parsed.mainTitle) {
+    // If still no parse, fallback to simpler heuristic: search for lines like "mainTitle: ...".
+    if (!parsed && typeof rawText === "string") {
+      const kv = {};
+      rawText.split(/\r?\n/).forEach(line => {
+        const m = line.match(/^(mainTitle|alt1|alt2|explanation)\s*[:=-]\s*(.+)$/i);
+        if (m) kv[m[1]] = m[2].trim();
+      });
+      if (Object.keys(kv).length >= 2) parsed = kv;
+    }
+
+    // Final fallback default content
+    if (!parsed) {
       parsed = {
         mainTitle: "Spectral Echoes",
         alt1: "Lanterns in the Mist",
         alt2: "Whispers of the Hollow",
-        explanation: "Fallback titles (Gemini response parsing failed)."
+        explanation: "Fallback titles (unable to parse model output)."
       };
     }
 
-    // Trim and sanitize minimally (keep as plain strings)
-    const safe = {
-      mainTitle: String(parsed.mainTitle).trim().slice(0, 120),
-      alt1: String(parsed.alt1 || "").trim().slice(0, 120),
-      alt2: String(parsed.alt2 || "").trim().slice(0, 120),
-      explanation: String(parsed.explanation || "").trim().slice(0, 300)
-    };
+    const safe = postProcessTitles(parsed);
 
     return {
       statusCode: 200,
