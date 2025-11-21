@@ -336,7 +336,7 @@ async generateTitle(regenerate = false) {
             ? { imageBase64, extraPrompt: "" }
             : { imageUrl: localTestPath, extraPrompt: "" };
 
-        const resp = await fetch("/.netlify/functions/generate-title-gemini-vision", {
+        const resp = await fetch("/.netlify/functions/generate_title", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)
