@@ -270,9 +270,12 @@ export class SpookyTitleGenerator {
         };
     }
 
-    generateTitle(regenerate = false) {
-        if (!this.imageData) return;
+async generateTitle(regenerate = false) {
+    // If no image or image analysis available, do nothing
+    if (!this.uploadedImage && !this.imageData) return;
 
+    // Helper: local fallback generator (your original logic, extracted)
+    const localGenerate = () => {
         // Seeded random based on image data + timestamp
         const seed = regenerate ? Date.now() : Math.floor(this.imageData.brightness * this.imageData.contrast);
         const rng = this.seededRandom(seed);
@@ -282,35 +285,83 @@ export class SpookyTitleGenerator {
         let explanation;
 
         if (this.imageData.isDark && this.imageData.isHighContrast) {
-            // Dark + high contrast → eldritch/eerie
             template = 'eldritch';
             explanation = 'Dark with high contrast → eldritch words used';
         } else if (!this.imageData.isDark && this.imageData.contrast < 15) {
-            // Bright + soft → moonlit/gentle
             template = 'moonlit';
             explanation = 'Bright and soft → moonlit theme';
         } else if (this.imageData.colorBias > 30) {
-            // Red bias → fiery/ember
             template = 'ember';
             explanation = 'Red color bias → warm, fiery theme';
         } else if (this.imageData.colorBias < -30) {
-            // Blue bias → cold/frost
             template = 'frost';
             explanation = 'Blue color bias → cold, spectral theme';
         } else {
-            // Default → whispering/shadowy
             template = 'default';
             explanation = 'Balanced tones → classic spooky theme';
         }
 
-        // Generate titles
         const mainTitle = this.buildTitle(template, rng);
         const alt1 = this.buildTitle(template, rng);
         const alt2 = this.buildTitle(template, rng);
 
-        // Display results
         this.displayTitles(mainTitle, alt1, alt2, explanation);
+    };
+
+    // Attempt to call the Gemini Vision serverless function.
+    // Build image Base64 (preferred) — fall back to local test path if conversion fails.
+    let imageBase64 = null;
+    try {
+        const canvas = document.createElement("canvas");
+        const MAX = 800;
+        let w = this.uploadedImage.width;
+        let h = this.uploadedImage.height;
+        if (w > h && w > MAX) { h = (h * MAX) / w; w = MAX; }
+        else if (h > MAX) { w = (w * MAX) / h; h = MAX; }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(this.uploadedImage, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+        imageBase64 = dataUrl.split(",")[1]; // strip data prefix
+    } catch (e) {
+        console.warn("Base64 conversion failed; will use local test path fallback", e);
     }
+
+    // Local test path (useful for local testing). When deployed, Base64 path is used.
+    const localTestPath = "/mnt/data/d7c4641f-9343-4d91-a93a-2ed67467d5df.png";
+
+    // If regenerate is true, we still try the API (not using cache)
+    try {
+        const body = imageBase64
+            ? { imageBase64, extraPrompt: "" }
+            : { imageUrl: localTestPath, extraPrompt: "" };
+
+        const resp = await fetch("/.netlify/functions/generate-title-gemini-vision", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+
+        if (!resp.ok) throw new Error(`API returned ${resp.status}`);
+
+        const data = await resp.json();
+
+        // Validate returned fields
+        if (data && data.mainTitle && (data.alt1 || data.alt2)) {
+            this.displayTitles(data.mainTitle, data.alt1 || "", data.alt2 || "", data.explanation || "");
+            return; // success — done
+        } else {
+            console.warn("API returned unexpected payload, falling back to local generator", data);
+            localGenerate();
+            return;
+        }
+    } catch (err) {
+        console.warn("API call failed or parsing failed — using local generator as fallback.", err);
+        localGenerate();
+        return;
+    }
+}
+
 
     seededRandom(seed) {
         let value = seed;
